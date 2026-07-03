@@ -1,2 +1,1 @@
-/api/*  http://node1.quaxly.com:25239/api/:splat  200
-/*      /index.html                                200
+/*  /index.html  200
