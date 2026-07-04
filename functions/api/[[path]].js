@@ -4,8 +4,12 @@
 // File location matters: functions/api/[[path]].js
 // The [[path]] part is Cloudflare's "catch-all" segment syntax,
 // so this one file handles /api/anything/here automatically.
+//
+// NOTE: this address changes whenever the bot is reinstalled/reallocated
+// on bot-hosting.net. If the dashboard stops getting data again after a
+// reinstall, check Allocations on bot-hosting.net and update BACKEND here.
 
-const BACKEND = "http://node1.quaxly.com:25239";
+const BACKEND = "http://node3.quaxly.com:25316";
 
 export async function onRequest(context) {
   const { request } = context;
@@ -24,7 +28,6 @@ export async function onRequest(context) {
 
   try {
     const response = await fetch(targetUrl, init);
-    // Clone the response so we can safely pass through status + body
     const body = await response.arrayBuffer();
     return new Response(body, {
       status: response.status,
