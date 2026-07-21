@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,20 +97,22 @@ export default function Welcome() {
     },
   });
 
-  if (config && !form.formState.isDirty) {
-    form.reset({
-      channelId: config.channelId || "",
-      messageTemplate: config.messageTemplate || "",
-      imageUrl: config.imageUrl || "",
-      avatarX: config.avatarX ?? 50,
-      avatarY: config.avatarY ?? 50,
-      avatarRadius: config.avatarRadius ?? 60,
-      nameX: config.nameX ?? 50,
-      nameY: config.nameY ?? 130,
-      nameWidth: config.nameWidth ?? 300,
-      nameHeight: config.nameHeight ?? 50,
-    });
-  }
+  useEffect(() => {
+    if (config && !form.formState.isDirty) {
+      form.reset({
+        channelId: config.channelId || "",
+        messageTemplate: config.messageTemplate || "",
+        imageUrl: config.imageUrl || "",
+        avatarX: config.avatarX ?? 50,
+        avatarY: config.avatarY ?? 50,
+        avatarRadius: config.avatarRadius ?? 60,
+        nameX: config.nameX ?? 50,
+        nameY: config.nameY ?? 130,
+        nameWidth: config.nameWidth ?? 300,
+        nameHeight: config.nameHeight ?? 50,
+      });
+    }
+  }, [config]);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
