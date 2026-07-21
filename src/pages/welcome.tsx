@@ -44,11 +44,11 @@ const welcomeSchema = z.object({
   imageUrl: z.string().optional(),
   avatarX: z.coerce.number().min(0),
   avatarY: z.coerce.number().min(0),
-  avatarRadius: z.coerce.number().min(1),
+  avatarRadius: z.coerce.number().min(5),
   nameX: z.coerce.number().min(0),
   nameY: z.coerce.number().min(0),
-  nameWidth: z.coerce.number().min(1),
-  nameHeight: z.coerce.number().min(1),
+  nameWidth: z.coerce.number().min(10),
+  nameHeight: z.coerce.number().min(10),
 });
 
 type WelcomeFormValues = z.infer<typeof welcomeSchema>;
@@ -56,14 +56,15 @@ type WelcomeFormValues = z.infer<typeof welcomeSchema>;
 const PREVIEW_W = 800;
 const PREVIEW_H = 400;
 
+type DragMode = { type: "move"; el: "avatar" | "name"; offsetX: number; offsetY: number } | { type: "resize"; el: "avatar" | "name"; edge: string; startX: number; startY: number; origX: number; origY: number; origW: number; origH: number } | null;
+
 export default function Welcome() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useLanguage();
   const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<"avatar" | "name" | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [drag, setDrag] = useState<DragMode>(null);
 
   const { data: config, isLoading } = useQuery({
     queryKey: ["welcome-config"],
@@ -94,13 +95,13 @@ export default function Welcome() {
       channelId: "",
       messageTemplate: "Welcome to {server}, {user}!",
       imageUrl: "",
-      avatarX: 50,
-      avatarY: 50,
-      avatarRadius: 60,
-      nameX: 50,
-      nameY: 130,
-      nameWidth: 300,
-      nameHeight: 50,
+      avatarX: 320,
+      avatarY: 40,
+      avatarRadius: 80,
+      nameX: 200,
+      nameY: 220,
+      nameWidth: 400,
+      nameHeight: 60,
     },
   });
 
@@ -110,27 +111,18 @@ export default function Welcome() {
         channelId: config.channelId || "",
         messageTemplate: config.messageTemplate || "",
         imageUrl: config.imageUrl || "",
-        avatarX: config.avatarX ?? 50,
-        avatarY: config.avatarY ?? 50,
-        avatarRadius: config.avatarRadius ?? 60,
-        nameX: config.nameX ?? 50,
-        nameY: config.nameY ?? 130,
-        nameWidth: config.nameWidth ?? 300,
-        nameHeight: config.nameHeight ?? 50,
+        avatarX: config.avatarX ?? 320,
+        avatarY: config.avatarY ?? 40,
+        avatarRadius: config.avatarRadius ?? 80,
+        nameX: config.nameX ?? 200,
+        nameY: config.nameY ?? 220,
+        nameWidth: config.nameWidth ?? 400,
+        nameHeight: config.nameHeight ?? 60,
       });
     }
   }, [config]);
 
   const vals = form.watch();
-
-  const toPreview = useCallback((px: number, py: number) => {
-    if (!previewRef.current) return { x: 0, y: 0 };
-    const rect = previewRef.current.getBoundingClientRect();
-    return {
-      x: (px / PREVIEW_W) * rect.width,
-      y: (py / PREVIEW_H) * rect.height,
-    };
-  }, []);
 
   const fromPreview = useCallback((clientX: number, clientY: number) => {
     if (!previewRef.current) return { x: 0, y: 0 };
@@ -155,35 +147,86 @@ export default function Welcome() {
     reader.readAsDataURL(file);
   };
 
-  const handleMouseDown = (el: "avatar" | "name") => (e: React.MouseEvent) => {
+  const handleMoveStart = (el: "avatar" | "name") => (e: React.MouseEvent) => {
     e.preventDefault();
-    setDragging(el);
+    e.stopPropagation();
     const pos = fromPreview(e.clientX, e.clientY);
     const fieldX = el === "avatar" ? vals.avatarX : vals.nameX;
     const fieldY = el === "avatar" ? vals.avatarY : vals.nameY;
-    setDragOffset({ x: pos.x - fieldX, y: pos.y - fieldY });
+    setDrag({ type: "move", el, offsetX: pos.x - fieldX, offsetY: pos.y - fieldY });
+  };
+
+  const handleResizeStart = (el: "avatar" | "name", edge: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pos = fromPreview(e.clientX, e.clientY);
+    setDrag({
+      type: "resize",
+      el,
+      edge,
+      startX: pos.x,
+      startY: pos.y,
+      origX: el === "avatar" ? vals.avatarX : vals.nameX,
+      origY: el === "avatar" ? vals.avatarY : vals.nameY,
+      origW: el === "avatar" ? vals.avatarRadius * 2 : vals.nameWidth,
+      origH: el === "avatar" ? vals.avatarRadius * 2 : vals.nameHeight,
+    });
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!dragging || !previewRef.current) return;
+    if (!drag || !previewRef.current) return;
     const pos = fromPreview(e.clientX, e.clientY);
-    const newX = Math.max(0, Math.min(PREVIEW_W - (dragging === "avatar" ? vals.avatarRadius * 2 : vals.nameWidth), pos.x - dragOffset.x));
-    const newY = Math.max(0, Math.min(PREVIEW_H - (dragging === "avatar" ? vals.avatarRadius * 2 : vals.nameHeight), pos.y - dragOffset.y));
-    if (dragging === "avatar") {
-      form.setValue("avatarX", newX, { shouldDirty: true });
-      form.setValue("avatarY", newY, { shouldDirty: true });
-    } else {
-      form.setValue("nameX", newX, { shouldDirty: true });
-      form.setValue("nameY", newY, { shouldDirty: true });
+
+    if (drag.type === "move") {
+      const w = drag.el === "avatar" ? vals.avatarRadius * 2 : vals.nameWidth;
+      const h = drag.el === "avatar" ? vals.avatarRadius * 2 : vals.nameHeight;
+      const newX = Math.max(0, Math.min(PREVIEW_W - w, pos.x - drag.offsetX));
+      const newY = Math.max(0, Math.min(PREVIEW_H - h, pos.y - drag.offsetY));
+      if (drag.el === "avatar") {
+        form.setValue("avatarX", newX, { shouldDirty: true });
+        form.setValue("avatarY", newY, { shouldDirty: true });
+      } else {
+        form.setValue("nameX", newX, { shouldDirty: true });
+        form.setValue("nameY", newY, { shouldDirty: true });
+      }
+    } else if (drag.type === "resize") {
+      const dx = pos.x - drag.startX;
+      const dy = pos.y - drag.startY;
+      const edge = drag.edge;
+
+      if (drag.el === "avatar") {
+        let newR = vals.avatarRadius;
+        if (edge.includes("right") || edge.includes("left")) {
+          newR = Math.max(15, Math.round((drag.origW + dx) / 2));
+        } else if (edge.includes("bottom") || edge.includes("top")) {
+          newR = Math.max(15, Math.round((drag.origH + dy) / 2));
+        }
+        form.setValue("avatarRadius", newR, { shouldDirty: true });
+      } else {
+        let newW = vals.nameWidth;
+        let newH = vals.nameHeight;
+        if (edge.includes("right")) newW = Math.max(30, drag.origW + dx);
+        if (edge.includes("left")) {
+          newW = Math.max(30, drag.origW - dx);
+          form.setValue("nameX", drag.origX + dx, { shouldDirty: true });
+        }
+        if (edge.includes("bottom")) newH = Math.max(20, drag.origH + dy);
+        if (edge.includes("top")) {
+          newH = Math.max(20, drag.origH - dy);
+          form.setValue("nameY", drag.origY + dy, { shouldDirty: true });
+        }
+        form.setValue("nameWidth", Math.round(newW), { shouldDirty: true });
+        form.setValue("nameHeight", Math.round(newH), { shouldDirty: true });
+      }
     }
-  }, [dragging, dragOffset, vals.avatarRadius, vals.nameWidth, vals.nameHeight, fromPreview, form]);
+  }, [drag, vals.avatarRadius, vals.nameWidth, vals.nameHeight, fromPreview, form]);
 
   const handleMouseUp = useCallback(() => {
-    setDragging(null);
+    setDrag(null);
   }, []);
 
   useEffect(() => {
-    if (dragging) {
+    if (drag) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
       return () => {
@@ -191,42 +234,32 @@ export default function Welcome() {
         window.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [dragging, handleMouseMove, handleMouseUp]);
+  }, [drag, handleMouseMove, handleMouseUp]);
 
-  const avatarStyle: React.CSSProperties = {
-    position: "absolute",
-    left: `${(vals.avatarX / PREVIEW_W) * 100}%`,
-    top: `${(vals.avatarY / PREVIEW_H) * 100}%`,
-    width: `${(vals.avatarRadius * 2 / PREVIEW_W) * 100}%`,
-    height: `${(vals.avatarRadius * 2 / PREVIEW_H) * 100}%`,
-    borderRadius: "50%",
-    border: "3px dashed #a78bfa",
-    background: "rgba(167, 139, 250, 0.2)",
-    cursor: "grab",
-    zIndex: dragging === "avatar" ? 20 : 10,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: dragging === "avatar" ? "none" : "box-shadow 0.2s",
-    boxShadow: dragging === "avatar" ? "0 0 0 3px rgba(167,139,250,0.5)" : "none",
-  };
+  const avatarL = (vals.avatarX / PREVIEW_W) * 100;
+  const avatarT = (vals.avatarY / PREVIEW_H) * 100;
+  const avatarWPct = (vals.avatarRadius * 2 / PREVIEW_W) * 100;
+  const avatarHPct = (vals.avatarRadius * 2 / PREVIEW_H) * 100;
+  const nameL = (vals.nameX / PREVIEW_W) * 100;
+  const nameT = (vals.nameY / PREVIEW_H) * 100;
+  const nameWPct = (vals.nameWidth / PREVIEW_W) * 100;
+  const nameHPct = (vals.nameHeight / PREVIEW_H) * 100;
 
-  const nameStyle: React.CSSProperties = {
-    position: "absolute",
-    left: `${(vals.nameX / PREVIEW_W) * 100}%`,
-    top: `${(vals.nameY / PREVIEW_H) * 100}%`,
-    width: `${(vals.nameWidth / PREVIEW_W) * 100}%`,
-    height: `${(vals.nameHeight / PREVIEW_H) * 100}%`,
-    borderRadius: "8px",
-    border: "3px dashed #60a5fa",
-    background: "rgba(96, 165, 250, 0.2)",
-    cursor: "grab",
-    zIndex: dragging === "name" ? 20 : 10,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: dragging === "name" ? "none" : "box-shadow 0.2s",
-    boxShadow: dragging === "name" ? "0 0 0 3px rgba(96,165,250,0.5)" : "none",
+  const handleSize = 10;
+
+  const renderResizeHandles = (el: "avatar" | "name", w: number, h: number) => {
+    const handles = [
+      { edge: "right", style: { position: "absolute" as const, right: -handleSize / 2, top: "50%", transform: "translateY(-50%)", width: handleSize, height: handleSize, background: el === "avatar" ? "#a78bfa" : "#60a5fa", borderRadius: 2, cursor: "ew-resize", zIndex: 30 } },
+      { edge: "bottom", style: { position: "absolute" as const, bottom: -handleSize / 2, left: "50%", transform: "translateX(-50%)", width: handleSize, height: handleSize, background: el === "avatar" ? "#a78bfa" : "#60a5fa", borderRadius: 2, cursor: "ns-resize", zIndex: 30 } },
+      { edge: "bottom-right", style: { position: "absolute" as const, right: -handleSize / 2, bottom: -handleSize / 2, width: handleSize, height: handleSize, background: el === "avatar" ? "#a78bfa" : "#60a5fa", borderRadius: 2, cursor: "nwse-resize", zIndex: 30 } },
+    ];
+    return handles.map((h) => (
+      <div
+        key={h.edge}
+        style={h.style}
+        onMouseDown={handleResizeStart(el, h.edge)}
+      />
+    ));
   };
 
   return (
@@ -371,14 +404,14 @@ export default function Welcome() {
               <CardHeader>
                 <CardTitle className="text-lg">{t("welcomePreview") || "Card Preview"}</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("welcomePreviewDesc") || "Drag the circle (avatar) and rectangle (name) to position them"}
+                  {t("welcomePreviewDesc") || "Drag to move. Drag the small squares on edges to resize."}
                 </p>
               </CardHeader>
               <CardContent>
                 <div
                   ref={previewRef}
                   className="relative w-full bg-black/40 rounded-xl border border-white/10 select-none"
-                  style={{ aspectRatio: `${PREVIEW_W}/${PREVIEW_H}`, minHeight: "200px" }}
+                  style={{ aspectRatio: `${PREVIEW_W}/${PREVIEW_H}`, minHeight: "250px" }}
                 >
                   {vals.imageUrl ? (
                     <img
@@ -392,22 +425,55 @@ export default function Welcome() {
                   )}
 
                   <div
-                    style={avatarStyle}
-                    onMouseDown={handleMouseDown("avatar")}
+                    style={{
+                      position: "absolute",
+                      left: `${avatarL}%`,
+                      top: `${avatarT}%`,
+                      width: `${avatarWPct}%`,
+                      height: `${avatarHPct}%`,
+                      borderRadius: "50%",
+                      border: "3px dashed #a78bfa",
+                      background: "rgba(167, 139, 250, 0.2)",
+                      cursor: drag?.type === "move" && drag.el === "avatar" ? "grabbing" : "grab",
+                      zIndex: drag?.el === "avatar" ? 20 : 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: drag?.el === "avatar" ? "0 0 0 3px rgba(167,139,250,0.5)" : "none",
+                    }}
+                    onMouseDown={handleMoveStart("avatar")}
                   >
-                    <Circle className="w-6 h-6 text-primary opacity-50" />
+                    <Circle className="w-8 h-8 text-primary opacity-60" />
+                    {renderResizeHandles("avatar", vals.avatarRadius * 2, vals.avatarRadius * 2)}
                   </div>
 
                   <div
-                    style={nameStyle}
-                    onMouseDown={handleMouseDown("name")}
+                    style={{
+                      position: "absolute",
+                      left: `${nameL}%`,
+                      top: `${nameT}%`,
+                      width: `${nameWPct}%`,
+                      height: `${nameHPct}%`,
+                      borderRadius: "8px",
+                      border: "3px dashed #60a5fa",
+                      background: "rgba(96, 165, 250, 0.2)",
+                      cursor: drag?.type === "move" && drag.el === "name" ? "grabbing" : "grab",
+                      zIndex: drag?.el === "name" ? 20 : 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: drag?.el === "name" ? "0 0 0 3px rgba(96,165,250,0.5)" : "none",
+                    }}
+                    onMouseDown={handleMoveStart("name")}
                   >
-                    <span className="text-xs font-mono text-blue-400 opacity-60">Username</span>
+                    <span className="text-sm font-mono text-blue-300 opacity-70 select-none">Username</span>
+                    {renderResizeHandles("name", vals.nameWidth, vals.nameHeight)}
                   </div>
                 </div>
                 <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border-2 border-primary inline-block" /> Avatar</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-blue-500 inline-block" /> Name</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border-2 border-purple-400 inline-block" /> Avatar (drag to move)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-blue-400 inline-block" /> Name (drag to move)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-purple-400 rounded-sm inline-block" /> Edge handle (drag to resize)</span>
                 </div>
               </CardContent>
             </Card>
@@ -456,7 +522,7 @@ export default function Welcome() {
                       <FormItem>
                         <FormLabel>{t("radius")}</FormLabel>
                         <FormControl>
-                          <Input type="number" min={1} {...field} className="bg-background/50" />
+                          <Input type="number" min={5} {...field} className="bg-background/50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -509,7 +575,7 @@ export default function Welcome() {
                         <FormItem>
                           <FormLabel>Width</FormLabel>
                           <FormControl>
-                            <Input type="number" min={1} {...field} className="bg-background/50" />
+                            <Input type="number" min={10} {...field} className="bg-background/50" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -522,7 +588,7 @@ export default function Welcome() {
                         <FormItem>
                           <FormLabel>Height</FormLabel>
                           <FormControl>
-                            <Input type="number" min={1} {...field} className="bg-background/50" />
+                            <Input type="number" min={10} {...field} className="bg-background/50" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
