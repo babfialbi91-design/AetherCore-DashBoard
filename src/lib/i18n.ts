@@ -108,7 +108,7 @@ const translations = {
     reasonPlaceholder: 'e.g. Spamming in general chat',
     issuing: 'Issuing...',
     warning: 'Warning',
-    warnings: 'Warnings',
+    warningCount: 'Warnings',
     moderator: 'Moderator:',
     noWarnings: 'No warnings recorded. Server is peaceful.',
 
@@ -239,7 +239,7 @@ const translations = {
     shopTitle: 'المتجر',
     shopDesc: 'المنتجات التي يمكن للأعضاء شراؤها بـ {currency}.',
     shopChannel: 'قناة المتجر',
-    shopDesc: 'البوت ينشر (ويحدّث) رسالة متجر مباشرة مع أزرار الشراء في هذه القناة.',
+    shopChannelDesc: 'البوت ينشر (ويحدّث) رسالة متجر مباشرة مع أزرار الشراء في هذه القناة.',
     addItem: 'إضافة منتج',
     newItem: 'منتج جديد',
     itemName: 'اسم المنتج',
@@ -287,7 +287,7 @@ const translations = {
     reasonPlaceholder: 'مثال: سبام في الشات العام',
     issuing: 'جاري الإصدار...',
     warning: 'تحذير',
-    warnings: 'تحذيرات',
+    warningCount: 'تحذيرات',
     moderator: 'المشرف:',
     noWarnings: 'لا توجد تحذيرات مسجلة. السيرفر آمن.',
 

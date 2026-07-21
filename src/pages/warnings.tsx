@@ -155,13 +155,13 @@ export default function Warnings() {
                       <div className="text-xs text-muted-foreground font-mono">{record.userId}</div>
                     </div>
                     <Badge variant="destructive" className="ml-4 font-mono">
-                      {record.warnings?.length ?? 0} {(record.warnings?.length ?? 0) === 1 ? t("warning") : t("warnings")}
+                      {record.warnings?.length ?? 0} {(record.warnings?.length ?? 0) === 1 ? t("warning") : t("warningCount")}
                     </Badge>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-6">
                   <div className="space-y-3 mt-2 pl-14 border-l-2 border-white/5 ml-5">
-                    {(record.warnings ?? []).map((warning, idx) => (
+                    {(record.warnings ?? []).map((warning: any, idx: number) => (
                       <div key={idx} className="bg-black/30 p-4 rounded-lg border border-white/5 relative">
                         <div className="absolute w-4 h-[2px] bg-white/5 -left-[1.35rem] top-1/2 -translate-y-1/2" />
                         <div className="flex items-center justify-between mb-2">
