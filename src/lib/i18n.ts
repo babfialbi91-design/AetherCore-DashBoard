@@ -179,6 +179,13 @@ const translations = {
     search: 'Search...',
     noData: 'No data available.',
     copied: 'Copied!',
+    login: 'Log In',
+    loginDesc: 'Sign in to access the AetherCore Dashboard.',
+    email: 'Email',
+    emailPlaceholder: 'you@example.com',
+    password: 'Password',
+    passwordPlaceholder: 'Your password',
+    logout: 'Log Out',
   },
   ar: {
     // Layout
@@ -358,6 +365,13 @@ const translations = {
     search: 'بحث...',
     noData: 'لا توجد بيانات متاحة.',
     copied: 'تم النسخ!',
+    login: 'تسجيل الدخول',
+    loginDesc: 'سجل الدخول للوصول إلى لوحة تحكم AetherCore.',
+    email: 'البريد الإلكتروني',
+    emailPlaceholder: 'you@example.com',
+    password: 'كلمة المرور',
+    passwordPlaceholder: 'كلمة المرور الخاصة بك',
+    logout: 'تسجيل الخروج',
   },
 } as const;
 

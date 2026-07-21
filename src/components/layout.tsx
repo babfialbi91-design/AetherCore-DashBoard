@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { useGetBotStats } from "@workspace/api-client-react";
 import { useLanguage } from "@/hooks/use-language";
+import { useAuth } from "@/hooks/use-auth";
 import { 
   LayoutDashboard, 
   Trophy, 
@@ -16,7 +17,8 @@ import {
   PartyPopper,
   Calendar,
   Ticket,
-  Globe
+  Globe,
+  LogOut
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: stats, isLoading } = useGetBotStats();
   const { locale, setLocale, t } = useLanguage();
+  const { signOut } = useAuth();
 
   const isOnline = stats?.status === "online";
 
@@ -95,6 +98,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           >
             <Globe className="w-4 h-4" />
             <span>{locale === "en" ? "العربية" : "English"}</span>
+          </Button>
+        </div>
+
+        {/* Logout */}
+        <div className="px-4 py-3 border-t border-border mt-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => signOut()}
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{t("logout")}</span>
           </Button>
         </div>
 
