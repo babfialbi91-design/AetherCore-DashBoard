@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Megaphone, Send } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const schema = z.object({
   channelId: z.string().min(1, "Select a channel"),
@@ -21,6 +22,7 @@ export default function Announce() {
   const { data: channels, isLoading: channelsLoading } = useGetBotChannels();
   const send = useSendBotAnnouncement();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -49,8 +51,8 @@ export default function Announce() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Announce</h2>
-        <p className="text-muted-foreground mt-2">Send a message to any channel in your server.</p>
+        <h2 className="text-3xl font-bold tracking-tight">{t("announceTitle")}</h2>
+        <p className="text-muted-foreground mt-2">{t("announceDesc")}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -59,7 +61,7 @@ export default function Announce() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Megaphone className="w-4 h-4 text-primary" />
-                Compose Announcement
+                {t("composeAnnounce")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -70,11 +72,11 @@ export default function Announce() {
                     name="channelId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Target Channel</FormLabel>
+                        <FormLabel>{t("targetChannel")}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="bg-background/50" data-testid="select-channel">
-                              <SelectValue placeholder={channelsLoading ? "Loading channels..." : "Select a channel"} />
+                              <SelectValue placeholder={channelsLoading ? t("loadingChannels") : t("selectChannel")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="max-h-60 overflow-y-auto">
@@ -95,10 +97,10 @@ export default function Announce() {
                     name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Message</FormLabel>
+                        <FormLabel>{t("message")}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Write your announcement here..."
+                            placeholder={t("messagePlaceholder")}
                             className="bg-background/50 min-h-[160px] resize-none"
                             {...field}
                             data-testid="textarea-message"
@@ -116,7 +118,7 @@ export default function Announce() {
 
                   <Button type="submit" disabled={send.isPending} className="w-full" data-testid="button-send-announcement">
                     <Send className="w-4 h-4 mr-2" />
-                    {send.isPending ? "Sending..." : "Send Announcement"}
+                    {send.isPending ? t("sending") : t("sendAnnounce")}
                   </Button>
                 </form>
               </Form>
@@ -127,28 +129,28 @@ export default function Announce() {
         <div className="space-y-4">
           <Card className="bg-card/50 border-white/5">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Tips</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("tips")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Messages support standard Discord markdown formatting.</p>
+              <p>{t("tipsMarkdown")}</p>
               <div className="space-y-1 font-mono text-xs bg-black/30 p-3 rounded-lg">
-                <p><span className="text-primary">**bold**</span> — bold text</p>
-                <p><span className="text-primary">*italic*</span> — italic text</p>
-                <p><span className="text-primary">`code`</span> — inline code</p>
-                <p><span className="text-primary">@everyone</span> — ping all</p>
+                <p><span className="text-primary">**bold**</span> — {t("bold")}</p>
+                <p><span className="text-primary">*italic*</span> — {t("italic")}</p>
+                <p><span className="text-primary">`code`</span> — {t("code")}</p>
+                <p><span className="text-primary">@everyone</span> — {t("pingAll")}</p>
               </div>
-              <p>Max 2000 characters per message.</p>
+              <p>{t("maxChars")}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card/50 border-white/5">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Available Channels</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("availableChannels")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {channelsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading...</p>
+                  <p className="text-sm text-muted-foreground">{t("loading")}</p>
                 ) : channels?.map((ch) => (
                   <div key={ch.id} className="text-sm text-muted-foreground py-1 flex items-center gap-2" data-testid={`text-channel-${ch.id}`}>
                     <span className="text-primary">#</span>

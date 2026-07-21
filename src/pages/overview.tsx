@@ -3,17 +3,19 @@ import { useGetBotStats, useGetBotLeaderboard, useGetBotLfgSessions } from "@wor
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Activity, Clock, Terminal, Trophy, Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function Overview() {
   const { data: stats, isLoading: statsLoading } = useGetBotStats();
   const { data: leaderboard, isLoading: leaderboardLoading } = useGetBotLeaderboard();
   const { data: lfgSessions, isLoading: lfgLoading } = useGetBotLfgSessions();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
-        <p className="text-muted-foreground mt-2">Monitor bot performance and server metrics.</p>
+        <h2 className="text-3xl font-bold tracking-tight">{t("overviewTitle")}</h2>
+        <p className="text-muted-foreground mt-2">{t("overviewDesc")}</p>
       </div>
 
       {statsLoading ? (
@@ -34,42 +36,42 @@ export default function Overview() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card/50 border-white/5 hover:border-primary/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Members</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("totalMembers")}</CardTitle>
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold font-mono text-primary-foreground">{stats.memberCount?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">In {stats.guildName || "Primary Guild"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("inGuild", { guild: stats.guildName || "Primary Guild" })}</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-white/5 hover:border-primary/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Commands Run</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("commandsRun")}</CardTitle>
               <Terminal className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold font-mono text-primary-foreground">{stats.commandCount?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Since last restart</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("sinceRestart")}</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-white/5 hover:border-primary/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Gateway Ping</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("gatewayPing")}</CardTitle>
               <Activity className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold font-mono text-primary-foreground">{stats.ping || 0}ms</div>
-              <p className="text-xs text-muted-foreground mt-1">Discord WebSocket</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("discordWs")}</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-white/5 hover:border-primary/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Uptime</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("uptime")}</CardTitle>
               <Clock className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold font-mono text-primary-foreground">{stats.uptime != null ? `${Math.floor((stats.uptime as number) / 3600)}h` : "0h"}</div>
-              <p className="text-xs text-muted-foreground mt-1">Online duration</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("onlineDuration")}</p>
             </CardContent>
           </Card>
         </div>
@@ -81,7 +83,7 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Trophy className="w-5 h-5 text-yellow-500" />
-                Top Players
+                {t("topPlayers")}
               </CardTitle>
             </div>
           </CardHeader>
@@ -103,14 +105,14 @@ export default function Overview() {
                       <span className="font-medium text-sm">User {entry.userId.slice(-4)}</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm font-mono">
-                      <span className="text-muted-foreground">Lvl {entry.level}</span>
+                      <span className="text-muted-foreground">{t("level")} {entry.level}</span>
                       <span className="text-primary">{entry.xp.toLocaleString()} XP</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground p-8">No leaderboard data found.</div>
+              <div className="h-full flex items-center justify-center text-muted-foreground p-8">{t("noLeaderboard")}</div>
             )}
           </CardContent>
         </Card>
@@ -120,7 +122,7 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Swords className="w-5 h-5 text-blue-400" />
-                Recent LFG Sessions
+                {t("recentLfg")}
               </CardTitle>
             </div>
           </CardHeader>
@@ -145,7 +147,7 @@ export default function Overview() {
                 ))}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground p-8">No active LFG sessions.</div>
+              <div className="h-full flex items-center justify-center text-muted-foreground p-8">{t("noLfg")}</div>
             )}
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PartyPopper, Plus, Trophy, Users, Coins, Flag } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const CURRENCY_NAME = "AetherCoin";
 
@@ -53,6 +54,7 @@ export default function Events() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const { t } = useLanguage();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["events"],
@@ -105,14 +107,14 @@ export default function Events() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Events</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("eventsTitle")}</h2>
           <p className="text-muted-foreground mt-2">
-            Run competitions and giveaways — members join with one click, winners get paid in {CURRENCY_NAME} automatically.
+            {t("eventsDesc", { currency: CURRENCY_NAME })}
           </p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} data-testid="button-toggle-form">
           <Plus className="w-4 h-4 mr-2" />
-          New Event
+          {t("newEvent")}
         </Button>
       </div>
 
@@ -121,7 +123,7 @@ export default function Events() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <PartyPopper className="w-4 h-4 text-primary" />
-              New Event
+              {t("newEvent")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,9 +135,9 @@ export default function Events() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Event Name</FormLabel>
+                        <FormLabel>{t("eventName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Weekend Giveaway" {...field} data-testid="input-event-name" className="bg-background/50" />
+                          <Input placeholder={t("eventNamePlaceholder")} {...field} data-testid="input-event-name" className="bg-background/50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -146,11 +148,11 @@ export default function Events() {
                     name="channelId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Channel</FormLabel>
+                        <FormLabel>{t("channel")}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="bg-background/50" data-testid="select-event-channel">
-                              <SelectValue placeholder={channelsLoading ? "Loading channels..." : "Select a channel"} />
+                              <SelectValue placeholder={channelsLoading ? t("loadingChannels") : t("selectChannel")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="max-h-60 overflow-y-auto">
@@ -172,7 +174,7 @@ export default function Events() {
                     name="winnerCount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Number of Winners</FormLabel>
+                        <FormLabel>{t("winnerCount")}</FormLabel>
                         <FormControl>
                           <Input type="number" min={1} {...field} data-testid="input-winner-count" className="bg-background/50" />
                         </FormControl>
@@ -185,7 +187,7 @@ export default function Events() {
                     name="coinReward"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reward per Winner ({CURRENCY_NAME})</FormLabel>
+                        <FormLabel>{t("rewardPerWinner", { currency: CURRENCY_NAME })}</FormLabel>
                         <FormControl>
                           <Input type="number" min={1} {...field} data-testid="input-coin-reward" className="bg-background/50" />
                         </FormControl>
@@ -199,10 +201,10 @@ export default function Events() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (optional)</FormLabel>
+                      <FormLabel>{t("eventDesc")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Rules, how to enter, anything members should know..."
+                          placeholder={t("eventDescPlaceholder")}
                           className="bg-background/50 resize-none"
                           {...field}
                           data-testid="textarea-event-description"
@@ -214,7 +216,7 @@ export default function Events() {
                 />
                 <div className="flex gap-3">
                   <Button type="submit" disabled={createEvent.isPending} data-testid="button-submit-event">
-                    {createEvent.isPending ? "Posting..." : "Create & Post Event"}
+                    {createEvent.isPending ? t("posting") : t("createPost")}
                   </Button>
                   <Button
                     variant="outline"
@@ -225,7 +227,7 @@ export default function Events() {
                     }}
                     data-testid="button-cancel"
                   >
-                    Cancel
+                    {t("cancel")}
                   </Button>
                 </div>
               </form>
@@ -270,11 +272,11 @@ export default function Events() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="w-3.5 h-3.5 text-primary" />
-                        {(event.participants || []).length} entries
+                        {(event.participants || []).length} {t("entries")}
                       </span>
                       <span className="flex items-center gap-1">
                         <Trophy className="w-3.5 h-3.5 text-primary" />
-                        {event.winner_count} winner(s)
+                        {event.winner_count} {t("winners")}
                       </span>
                       <span className="flex items-center gap-1">
                         <Coins className="w-3.5 h-3.5 text-primary" />
@@ -283,7 +285,7 @@ export default function Events() {
                     </div>
                     {event.status === "ended" && event.winners?.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-white/5">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Winners</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t("winners")}</p>
                         <p className="text-sm text-primary font-mono">
                           {event.winners.map((w) => `<@${w}>`).join(", ")}
                         </p>
@@ -298,7 +300,7 @@ export default function Events() {
                       data-testid={`button-end-event-${i}`}
                     >
                       <Trophy className="w-3.5 h-3.5 mr-1.5" />
-                      End & Draw Winners
+                      {t("endDraw")}
                     </Button>
                   )}
                 </div>
@@ -309,8 +311,8 @@ export default function Events() {
           <Card className="bg-card/50 border-white/5">
             <CardContent className="py-16 text-center text-muted-foreground">
               <PartyPopper className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p>No events yet.</p>
-              <p className="text-sm mt-1">Click "New Event" to launch your first competition.</p>
+              <p>{t("noEvents")}</p>
+              <p className="text-sm mt-1">{t("noEventsHint")}</p>
             </CardContent>
           </Card>
         )}

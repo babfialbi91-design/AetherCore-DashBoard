@@ -4,18 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Medal, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function Leaderboard() {
   const { data: leaderboard, isLoading } = useGetBotLeaderboard();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <Trophy className="w-8 h-8 text-primary" />
-          Server Leaderboard
+          {t("leaderboardTitle")}
         </h2>
-        <p className="text-muted-foreground mt-2">Global XP and leveling rankings across the guild.</p>
+        <p className="text-muted-foreground mt-2">{t("leaderboardDesc")}</p>
       </div>
 
       <Card className="bg-card/50 border-white/5 overflow-hidden">
@@ -23,10 +25,10 @@ export default function Leaderboard() {
           <table className="w-full text-sm text-left">
             <thead className="bg-black/40 text-muted-foreground uppercase font-mono text-xs">
               <tr>
-                <th className="px-6 py-4 font-medium tracking-wider">Rank</th>
-                <th className="px-6 py-4 font-medium tracking-wider">User ID</th>
-                <th className="px-6 py-4 font-medium tracking-wider">Level</th>
-                <th className="px-6 py-4 font-medium tracking-wider text-right">Total XP</th>
+                <th className="px-6 py-4 font-medium tracking-wider">{t("rank")}</th>
+                <th className="px-6 py-4 font-medium tracking-wider">{t("userId")}</th>
+                <th className="px-6 py-4 font-medium tracking-wider">{t("level")}</th>
+                <th className="px-6 py-4 font-medium tracking-wider text-right">{t("totalXp")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -71,7 +73,7 @@ export default function Leaderboard() {
               ) : (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                    No leaderboard data available.
+                    {t("noLeaderboardData")}
                   </td>
                 </tr>
               )}

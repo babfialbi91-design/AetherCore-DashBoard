@@ -5,9 +5,11 @@ import { Swords, Trophy, Users, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function Tournaments() {
   const { data: tournaments, isLoading } = useGetBotTournaments();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -15,9 +17,9 @@ export default function Tournaments() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Swords className="w-8 h-8 text-primary" />
-            Tournaments
+            {t("tournamentsTitle")}
           </h2>
-          <p className="text-muted-foreground mt-2">Live and upcoming competitive events.</p>
+          <p className="text-muted-foreground mt-2">{t("tournamentsDesc")}</p>
         </div>
       </div>
 
@@ -77,7 +79,7 @@ export default function Tournaments() {
         ) : (
           <div className="col-span-full py-16 text-center text-muted-foreground bg-card/30 rounded-xl border border-white/5 border-dashed">
             <Trophy className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="text-lg">No tournaments scheduled.</p>
+            <p className="text-lg">{t("noTournaments")}</p>
           </div>
         )}
       </div>

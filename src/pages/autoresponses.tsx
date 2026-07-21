@@ -16,6 +16,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, Plus, Zap, Trash2 } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const schema = z.object({
   trigger: z.string().min(1, "Trigger is required"),
@@ -33,6 +34,7 @@ export default function AutoResponses() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const { t } = useLanguage();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -79,12 +81,12 @@ export default function AutoResponses() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Auto-Responses</h2>
-          <p className="text-muted-foreground mt-2">Keyword triggers that make the bot auto-reply.</p>
+          <h2 className="text-3xl font-bold tracking-tight">{t("autoResponsesTitle")}</h2>
+          <p className="text-muted-foreground mt-2">{t("autoResponsesDesc")}</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} data-testid="button-toggle-form">
           <Plus className="w-4 h-4 mr-2" />
-          Add Response
+          {t("addResponse")}
         </Button>
       </div>
 
@@ -93,7 +95,7 @@ export default function AutoResponses() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary" />
-              New Auto-Response
+              {t("newAutoResponse")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -105,10 +107,10 @@ export default function AutoResponses() {
                     name="trigger"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Trigger Keyword</FormLabel>
+                        <FormLabel>{t("triggerKeyword")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. hello, rules, info"
+                            placeholder={t("triggerPlaceholder")}
                             {...field}
                             data-testid="input-trigger"
                             className="bg-background/50"
@@ -123,10 +125,10 @@ export default function AutoResponses() {
                     name="embedTitle"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Embed Title (optional)</FormLabel>
+                        <FormLabel>{t("embedTitle")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Server Rules"
+                            placeholder={t("embedTitlePlaceholder")}
                             {...field}
                             data-testid="input-embed-title"
                             className="bg-background/50"
@@ -142,10 +144,10 @@ export default function AutoResponses() {
                   name="response"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Response Text</FormLabel>
+                      <FormLabel>{t("responseText")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="What the bot will reply..."
+                          placeholder={t("responsePlaceholder")}
                           {...field}
                           data-testid="input-response"
                           className="bg-background/50"
@@ -157,7 +159,7 @@ export default function AutoResponses() {
                 />
                 <div className="flex gap-3">
                   <Button type="submit" disabled={create.isPending} data-testid="button-submit-response">
-                    {create.isPending ? "Saving..." : "Save Response"}
+                    {create.isPending ? t("saving") : t("saveResponse")}
                   </Button>
                   <Button
                     variant="outline"
@@ -165,7 +167,7 @@ export default function AutoResponses() {
                     onClick={() => { setShowForm(false); form.reset(); }}
                     data-testid="button-cancel"
                   >
-                    Cancel
+                    {t("cancel")}
                   </Button>
                 </div>
               </form>
@@ -228,8 +230,8 @@ export default function AutoResponses() {
           <Card className="bg-card/50 border-white/5">
             <CardContent className="py-16 text-center text-muted-foreground">
               <Bot className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p>No auto-responses configured yet.</p>
-              <p className="text-sm mt-1">Click "Add Response" to create your first trigger.</p>
+              <p>{t("noAutoResponses")}</p>
+              <p className="text-sm mt-1">{t("noAutoResponsesHint")}</p>
             </CardContent>
           </Card>
         )}

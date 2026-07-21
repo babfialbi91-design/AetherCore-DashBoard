@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useGetBotStats } from "@workspace/api-client-react";
+import { useLanguage } from "@/hooks/use-language";
 import { 
   LayoutDashboard, 
   Trophy, 
@@ -12,30 +13,37 @@ import {
   Loader2,
   Server,
   ShoppingBag,
-  PartyPopper
+  PartyPopper,
+  Calendar,
+  Ticket,
+  Globe
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/lfg", label: "LFG Sessions", icon: Gamepad2 },
-  { href: "/tournaments", label: "Tournaments", icon: Swords },
-  { href: "/shop", label: "Shop", icon: ShoppingBag },
-  { href: "/events", label: "Events", icon: PartyPopper },
-  { href: "/warnings", label: "Warnings", icon: AlertTriangle },
-  { href: "/autoresponses", label: "Auto Responses", icon: MessageSquare },
-  { href: "/announce", label: "Announcements", icon: Megaphone },
-];
+import { Button } from "@/components/ui/button";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: stats, isLoading } = useGetBotStats();
+  const { locale, setLocale, t } = useLanguage();
 
   const isOnline = stats?.status === "online";
 
+  const navItems = [
+    { href: "/", label: t("overview"), icon: LayoutDashboard },
+    { href: "/leaderboard", label: t("leaderboard"), icon: Trophy },
+    { href: "/lfg", label: t("lfgSessions"), icon: Gamepad2 },
+    { href: "/tournaments", label: t("tournaments"), icon: Swords },
+    { href: "/shop", label: t("shop"), icon: ShoppingBag },
+    { href: "/events", label: t("events"), icon: PartyPopper },
+    { href: "/daily", label: t("daily"), icon: Calendar },
+    { href: "/tickets", label: t("tickets"), icon: Ticket },
+    { href: "/warnings", label: t("warnings"), icon: AlertTriangle },
+    { href: "/autoresponses", label: t("autoResponses"), icon: MessageSquare },
+    { href: "/announce", label: t("announcements"), icon: Megaphone },
+  ];
+
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+    <div className={`flex h-screen bg-background text-foreground overflow-hidden ${locale === "ar" ? "rtl" : "ltr"}`}>
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col z-10">
         <div className="h-16 flex items-center px-6 border-b border-border">
@@ -68,13 +76,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                     <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
                   </span>
-                  <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">{stats.status}</span>
+                  <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">{isOnline ? t("online") : t("offline")}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">Status unavailable</div>
+            <div className="text-sm text-muted-foreground">{t("statusUnavailable")}</div>
           )}
+        </div>
+
+        {/* Language Switcher */}
+        <div className="px-4 py-3 border-b border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+          >
+            <Globe className="w-4 h-4" />
+            <span>{locale === "en" ? "العربية" : "English"}</span>
+          </Button>
         </div>
 
         {/* Navigation */}

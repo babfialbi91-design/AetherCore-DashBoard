@@ -5,9 +5,11 @@ import { Gamepad2, Users, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function Lfg() {
   const { data: sessions, isLoading } = useGetBotLfgSessions();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -15,12 +17,12 @@ export default function Lfg() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Gamepad2 className="w-8 h-8 text-primary" />
-            Looking For Group
+            {t("lfgTitle")}
           </h2>
-          <p className="text-muted-foreground mt-2">Active matchmaking sessions in the server.</p>
+          <p className="text-muted-foreground mt-2">{t("lfgDesc")}</p>
         </div>
         <Badge variant="outline" className="px-4 py-1 text-sm bg-black/40 font-mono">
-          {sessions?.length || 0} Active
+          {sessions?.length || 0} {t("active")}
         </Badge>
       </div>
 
@@ -58,7 +60,7 @@ export default function Lfg() {
                 </p>
               </CardContent>
               <CardFooter className="pt-4 border-t border-white/5 bg-black/20 flex flex-col items-start gap-2">
-                <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Host</div>
+                <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">{t("host")}</div>
                 <div className="text-sm font-medium">{session.hostId}</div>
               </CardFooter>
             </Card>
@@ -66,7 +68,7 @@ export default function Lfg() {
         ) : (
           <div className="col-span-full py-12 text-center text-muted-foreground bg-card/30 rounded-xl border border-white/5 border-dashed">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p>No active LFG sessions.</p>
+            <p>{t("noLfgSessions")}</p>
           </div>
         )}
       </div>

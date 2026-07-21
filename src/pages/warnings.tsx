@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useLanguage } from "@/hooks/use-language";
 
 const warnSchema = z.object({
   userId: z.string().min(1, "Discord User ID is required"),
@@ -28,6 +29,7 @@ export default function Warnings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const { t } = useLanguage();
 
   const form = useForm<WarnValues>({
     resolver: zodResolver(warnSchema),
@@ -59,13 +61,13 @@ export default function Warnings() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <AlertTriangle className="w-8 h-8 text-destructive" />
-            Moderation Warnings
+            {t("warningsTitle")}
           </h2>
-          <p className="text-muted-foreground mt-2">Active warnings and infractions across the server.</p>
+          <p className="text-muted-foreground mt-2">{t("warningsDesc")}</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} variant="destructive" data-testid="button-toggle-warn-form">
           <Plus className="w-4 h-4 mr-2" />
-          Issue Warning
+          {t("issueWarning")}
         </Button>
       </div>
 
@@ -74,7 +76,7 @@ export default function Warnings() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-destructive">
               <Shield className="w-4 h-4" />
-              Issue New Warning
+              {t("issueNewWarning")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -86,10 +88,10 @@ export default function Warnings() {
                     name="userId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discord User ID</FormLabel>
+                        <FormLabel>{t("discordUserId")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. 123456789012345678"
+                            placeholder={t("userIdPlaceholder")}
                             {...field}
                             data-testid="input-warn-userid"
                             className="bg-background/50 font-mono"
@@ -104,10 +106,10 @@ export default function Warnings() {
                     name="reason"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reason</FormLabel>
+                        <FormLabel>{t("reason")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Spamming in general chat"
+                            placeholder={t("reasonPlaceholder")}
                             {...field}
                             data-testid="input-warn-reason"
                             className="bg-background/50"
@@ -120,10 +122,10 @@ export default function Warnings() {
                 </div>
                 <div className="flex gap-3">
                   <Button type="submit" variant="destructive" disabled={createWarning.isPending} data-testid="button-submit-warning">
-                    {createWarning.isPending ? "Issuing..." : "Issue Warning"}
+                    {createWarning.isPending ? t("issuing") : t("issueWarning")}
                   </Button>
                   <Button variant="outline" type="button" onClick={() => setShowForm(false)} data-testid="button-cancel-warn">
-                    Cancel
+                    {t("cancel")}
                   </Button>
                 </div>
               </form>
@@ -153,7 +155,7 @@ export default function Warnings() {
                       <div className="text-xs text-muted-foreground font-mono">{record.userId}</div>
                     </div>
                     <Badge variant="destructive" className="ml-4 font-mono">
-                      {record.warnings?.length ?? 0} {(record.warnings?.length ?? 0) === 1 ? 'Warning' : 'Warnings'}
+                      {record.warnings?.length ?? 0} {(record.warnings?.length ?? 0) === 1 ? t("warning") : t("warnings")}
                     </Badge>
                   </div>
                 </AccordionTrigger>
@@ -170,7 +172,7 @@ export default function Warnings() {
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
-                          <span>Moderator:</span>
+                          <span>{t("moderator")}</span>
                           <Badge variant="outline" className="bg-white/5 border-white/10 font-mono text-[10px]">
                             {warning.moderatorTag}
                           </Badge>
@@ -185,7 +187,7 @@ export default function Warnings() {
         ) : (
           <div className="p-16 text-center text-muted-foreground">
             <ShieldAlert className="w-12 h-12 mx-auto mb-4 opacity-20 text-green-500" />
-            <p className="text-lg">No warnings recorded. Server is peaceful.</p>
+            <p className="text-lg">{t("noWarnings")}</p>
           </div>
         )}
       </div>

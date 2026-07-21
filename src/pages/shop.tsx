@@ -12,6 +12,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag, Plus, Trash2, Coins } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const CURRENCY_NAME = "AetherCoin";
 
@@ -47,6 +48,7 @@ export default function Shop() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const { t } = useLanguage();
 
   const { data: shopData, isLoading } = useQuery({
     queryKey: ["shop"],
@@ -108,27 +110,27 @@ export default function Shop() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Shop</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("shopTitle")}</h2>
           <p className="text-muted-foreground mt-2">
-            Items members can buy with {CURRENCY_NAME}.
+            {t("shopDesc", { currency: CURRENCY_NAME })}
           </p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} data-testid="button-toggle-form">
           <Plus className="w-4 h-4 mr-2" />
-          Add Item
+          {t("addItem")}
         </Button>
       </div>
 
       <Card className="bg-card/50 border-white/5">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Shop Channel
+            {t("shopChannel")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Select value={shopData?.channelId || undefined} onValueChange={(val) => setChannel.mutate(val)}>
             <SelectTrigger className="bg-background/50 max-w-sm" data-testid="select-shop-channel">
-              <SelectValue placeholder={channelsLoading ? "Loading channels..." : "Select a channel"} />
+              <SelectValue placeholder={channelsLoading ? t("loadingChannels") : t("selectChannel")} />
             </SelectTrigger>
             <SelectContent className="max-h-60 overflow-y-auto">
               {channels?.map((ch) => (
@@ -139,7 +141,7 @@ export default function Shop() {
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-2">
-            The bot posts (and keeps updated) a live shop message with buy buttons in this channel.
+            {t("shopChannelDesc")}
           </p>
         </CardContent>
       </Card>
@@ -149,7 +151,7 @@ export default function Shop() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-primary" />
-              New Item
+              {t("newItem")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -161,9 +163,9 @@ export default function Shop() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Item Name</FormLabel>
+                        <FormLabel>{t("itemName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. VIP Role" {...field} data-testid="input-item-name" className="bg-background/50" />
+                          <Input placeholder={t("itemNamePlaceholder")} {...field} data-testid="input-item-name" className="bg-background/50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -174,7 +176,7 @@ export default function Shop() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price ({CURRENCY_NAME})</FormLabel>
+                        <FormLabel>{t("price", { currency: CURRENCY_NAME })}</FormLabel>
                         <FormControl>
                           <Input type="number" min={1} {...field} data-testid="input-item-price" className="bg-background/50" />
                         </FormControl>
@@ -188,9 +190,9 @@ export default function Shop() {
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image URL (optional)</FormLabel>
+                      <FormLabel>{t("imageUrl")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://..." {...field} data-testid="input-item-image" className="bg-background/50" />
+                        <Input placeholder={t("imageUrlPlaceholder")} {...field} data-testid="input-item-image" className="bg-background/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -201,10 +203,10 @@ export default function Shop() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t("description")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="What the buyer gets..."
+                          placeholder={t("descPlaceholder")}
                           className="bg-background/50 resize-none"
                           {...field}
                           data-testid="textarea-item-description"
@@ -216,7 +218,7 @@ export default function Shop() {
                 />
                 <div className="flex gap-3">
                   <Button type="submit" disabled={createItem.isPending} data-testid="button-submit-item">
-                    {createItem.isPending ? "Saving..." : "Save Item"}
+                    {createItem.isPending ? t("saving") : t("saveItem")}
                   </Button>
                   <Button
                     variant="outline"
@@ -227,7 +229,7 @@ export default function Shop() {
                     }}
                     data-testid="button-cancel"
                   >
-                    Cancel
+                    {t("cancel")}
                   </Button>
                 </div>
               </form>
@@ -279,8 +281,8 @@ export default function Shop() {
           <Card className="bg-card/50 border-white/5 md:col-span-2 lg:col-span-3">
             <CardContent className="py-16 text-center text-muted-foreground">
               <ShoppingBag className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p>No items in the shop yet.</p>
-              <p className="text-sm mt-1">Click "Add Item" to create your first product.</p>
+              <p>{t("noItems")}</p>
+              <p className="text-sm mt-1">{t("noItemsHint")}</p>
             </CardContent>
           </Card>
         )}
