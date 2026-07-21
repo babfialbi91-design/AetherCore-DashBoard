@@ -1,14 +1,29 @@
 import React from "react";
-import { useGetBotLeaderboard } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Medal, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+type LeaderboardEntry = {
+  userId: string;
+  level: number;
+  xp: number;
+};
+
 export default function Leaderboard() {
-  const { data: leaderboard, isLoading } = useGetBotLeaderboard();
   const { t } = useLanguage();
+  const { data: leaderboard, isLoading } = useQuery<LeaderboardEntry[]>({
+    queryKey: ["bot-leaderboard"],
+    queryFn: () => apiCall("/api/bot/leaderboard"),
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

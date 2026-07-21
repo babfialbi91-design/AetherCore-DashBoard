@@ -1,5 +1,5 @@
 import React from "react";
-import { useGetBotTournaments } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Swords, Trophy, Users, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,9 +7,29 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+type Tournament = {
+  id: string;
+  name: string;
+  game: string;
+  status: string;
+  hostId: string;
+  participants: string[];
+  maxPlayers: number;
+  createdAt: string;
+};
+
 export default function Tournaments() {
-  const { data: tournaments, isLoading } = useGetBotTournaments();
   const { t } = useLanguage();
+  const { data: tournaments, isLoading } = useQuery<Tournament[]>({
+    queryKey: ["bot-tournaments"],
+    queryFn: () => apiCall("/api/bot/tournaments"),
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -1,5 +1,5 @@
 import React from "react";
-import { useGetBotLfgSessions } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Gamepad2, Users, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,9 +7,28 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+type LfgSession = {
+  id: string;
+  game: string;
+  description: string;
+  hostId: string;
+  participants: string[];
+  playersNeeded: number;
+  createdAt: string;
+};
+
 export default function Lfg() {
-  const { data: sessions, isLoading } = useGetBotLfgSessions();
   const { t } = useLanguage();
+  const { data: sessions, isLoading } = useQuery<LfgSession[]>({
+    queryKey: ["bot-lfg-sessions"],
+    queryFn: () => apiCall("/api/bot/lfg/sessions"),
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -45,7 +64,7 @@ export default function Lfg() {
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-4">
                   <CardTitle className="text-xl font-bold text-foreground line-clamp-1">{session.game}</CardTitle>
-                  <Badge className="bg-primary/20 text-primary border-primary/30 font-mono shrinkage-0">
+                  <Badge className="bg-primary/20 text-primary border-primary/30 font-mono shrink-0">
                     {session.participants.length} / {session.playersNeeded}
                   </Badge>
                 </div>

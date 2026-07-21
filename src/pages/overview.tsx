@@ -1,15 +1,54 @@
 import React from "react";
-import { useGetBotStats, useGetBotLeaderboard, useGetBotLfgSessions } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Activity, Clock, Terminal, Trophy, Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+type BotStats = {
+  memberCount?: number;
+  guildName?: string;
+  commandCount?: number;
+  ping?: number;
+  uptime?: number;
+};
+
+type LeaderboardEntry = {
+  userId: string;
+  level: number;
+  xp: number;
+};
+
+type LfgSession = {
+  id: string;
+  game: string;
+  description: string;
+  hostId: string;
+  participants: string[];
+  playersNeeded: number;
+  createdAt: string;
+};
+
 export default function Overview() {
-  const { data: stats, isLoading: statsLoading } = useGetBotStats();
-  const { data: leaderboard, isLoading: leaderboardLoading } = useGetBotLeaderboard();
-  const { data: lfgSessions, isLoading: lfgLoading } = useGetBotLfgSessions();
   const { t } = useLanguage();
+  const { data: stats, isLoading: statsLoading } = useQuery<BotStats>({
+    queryKey: ["bot-stats"],
+    queryFn: () => apiCall("/api/bot/stats"),
+  });
+  const { data: leaderboard, isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
+    queryKey: ["bot-leaderboard"],
+    queryFn: () => apiCall("/api/bot/leaderboard"),
+  });
+  const { data: lfgSessions, isLoading: lfgLoading } = useQuery<LfgSession[]>({
+    queryKey: ["bot-lfg-sessions"],
+    queryFn: () => apiCall("/api/bot/lfg/sessions"),
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
