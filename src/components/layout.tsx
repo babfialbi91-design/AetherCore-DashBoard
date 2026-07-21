@@ -28,9 +28,12 @@ import {
   GitBranch,
   ShieldBan,
   Paintbrush,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -43,6 +46,7 @@ async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [collapsed, setCollapsed] = React.useState(false);
   const { data: stats, isLoading } = useQuery({
     queryKey: ["stats"],
     queryFn: () => apiCall<{ tag: string; id: string; avatar: string; status: string; ping: number; guildCount: number; guildName: string; memberCount: number; commandCount: number; uptime: number }>("/api/bot/stats"),
@@ -52,110 +56,182 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const isOnline = stats?.status === "online";
 
-  const navItems = [
-    { href: "/", label: t("overview"), icon: LayoutDashboard },
-    { href: "/leaderboard", label: t("leaderboard"), icon: Trophy },
-    { href: "/lfg", label: t("lfgSessions"), icon: Gamepad2 },
-    { href: "/tournaments", label: t("tournaments"), icon: Swords },
-    { href: "/shop", label: t("shop"), icon: ShoppingBag },
-    { href: "/events", label: t("events"), icon: PartyPopper },
-    { href: "/daily", label: t("daily"), icon: Calendar },
-    { href: "/economy", label: t("economy"), icon: Wallet },
-    { href: "/purchases", label: t("purchases"), icon: ShoppingCart },
-    { href: "/tickets", label: t("tickets"), icon: Ticket },
-    { href: "/welcome", label: t("welcome"), icon: UserPlus },
-    { href: "/logs", label: t("logs"), icon: ScrollText },
-    { href: "/levels", label: t("levels"), icon: TrendingUp },
-    { href: "/notifications", label: t("notifications"), icon: Bell },
-    { href: "/autorules", label: t("autoRules"), icon: GitBranch },
-    { href: "/badwords", label: t("badWords"), icon: ShieldBan },
-    { href: "/warnings", label: t("warnings"), icon: AlertTriangle },
-    { href: "/autoresponses", label: t("autoResponses"), icon: MessageSquare },
-    { href: "/announce", label: t("announcements"), icon: Megaphone },
-    { href: "/embedbuilder", label: t("embedBuilder"), icon: Paintbrush },
+  const navSections = [
+    {
+      label: t("overview") ? "MAIN" : "MAIN",
+      items: [
+        { href: "/", label: t("overview"), icon: LayoutDashboard },
+        { href: "/leaderboard", label: t("leaderboard"), icon: Trophy },
+        { href: "/levels", label: t("levels"), icon: TrendingUp },
+        { href: "/economy", label: t("economy"), icon: Wallet },
+      ],
+    },
+    {
+      label: "ENGAGE",
+      items: [
+        { href: "/lfg", label: t("lfgSessions"), icon: Gamepad2 },
+        { href: "/tournaments", label: t("tournaments"), icon: Swords },
+        { href: "/events", label: t("events"), icon: PartyPopper },
+        { href: "/daily", label: t("daily"), icon: Calendar },
+      ],
+    },
+    {
+      label: "MANAGE",
+      items: [
+        { href: "/shop", label: t("shop"), icon: ShoppingBag },
+        { href: "/purchases", label: t("purchases"), icon: ShoppingCart },
+        { href: "/tickets", label: t("tickets"), icon: Ticket },
+        { href: "/welcome", label: t("welcome"), icon: UserPlus },
+      ],
+    },
+    {
+      label: "MODERATION",
+      items: [
+        { href: "/warnings", label: t("warnings"), icon: AlertTriangle },
+        { href: "/logs", label: t("logs"), icon: ScrollText },
+        { href: "/badwords", label: t("badWords"), icon: ShieldBan },
+        { href: "/autorules", label: t("autoRules"), icon: GitBranch },
+      ],
+    },
+    {
+      label: "COMMS",
+      items: [
+        { href: "/notifications", label: t("notifications"), icon: Bell },
+        { href: "/autoresponses", label: t("autoResponses"), icon: MessageSquare },
+        { href: "/announce", label: t("announcements"), icon: Megaphone },
+        { href: "/embedbuilder", label: t("embedBuilder"), icon: Paintbrush },
+      ],
+    },
   ];
+
+  const sidebarW = collapsed ? "w-[68px]" : "w-64";
 
   return (
     <div className={`flex h-screen bg-background text-foreground overflow-hidden ${locale === "ar" ? "rtl" : "ltr"}`}>
-      <aside className="w-64 border-r border-border bg-card flex flex-col z-10">
-        <div className="h-16 flex items-center px-6 border-b border-border">
-          <Server className="w-6 h-6 mr-3 text-primary" />
-          <h1 className="font-bold text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">AETHERCORE</h1>
+      {/* Sidebar */}
+      <aside className={`${sidebarW} border-r border-white/5 glass-strong flex flex-col z-10 transition-all duration-300 ease-in-out`}>
+        {/* Logo */}
+        <div className="h-16 flex items-center px-5 border-b border-white/5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 glow-purple-sm">
+              <Server className="w-5 h-5 text-primary" />
+            </div>
+            {!collapsed && (
+              <h1 className="font-bold text-base tracking-wider text-gradient whitespace-nowrap">AETHERCORE</h1>
+            )}
+          </div>
         </div>
 
-        <div className="p-6 border-b border-border bg-black/20">
-          {isLoading ? (
-            <div className="flex items-center space-x-4">
-              <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
-              <div className="space-y-2">
-                <div className="h-4 w-20 bg-muted rounded animate-pulse" />
-                <div className="h-3 w-16 bg-muted rounded animate-pulse" />
-              </div>
-            </div>
-          ) : stats ? (
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-10 h-10 border border-border">
-                <AvatarImage src={stats.avatar ?? undefined} />
-                <AvatarFallback>{(stats.tag ?? "??").substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{stats.tag}</p>
-                <div className="flex items-center mt-1">
-                  <span className="relative flex h-2 w-2 mr-2">
-                    {isOnline && (
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    )}
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  </span>
-                  <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">{isOnline ? t("online") : t("offline")}</span>
+        {/* Bot Status */}
+        {!collapsed && (
+          <div className="p-4 border-b border-white/5">
+            <div className="glass rounded-xl p-3 border border-white/5">
+              {isLoading ? (
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-9 h-9 animate-spin text-muted-foreground" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3.5 w-20 bg-white/5 rounded animate-pulse" />
+                    <div className="h-3 w-16 bg-white/5 rounded animate-pulse" />
+                  </div>
                 </div>
+              ) : stats ? (
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-9 h-9 border border-white/10">
+                    <AvatarImage src={stats.avatar ?? undefined} />
+                    <AvatarFallback className="text-xs">{(stats.tag ?? "??").substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{stats.tag}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="relative flex h-1.5 w-1.5">
+                        {isOnline && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        )}
+                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isOnline ? "bg-green-500" : "bg-red-500"}`} />
+                      </span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">
+                        {isOnline ? t("online") : t("offline")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("statusUnavailable")}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1 py-3">
+          {navSections.map((section, si) => (
+            <div key={si} className="mb-4">
+              {!collapsed && (
+                <p className="px-5 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">
+                  {section.label}
+                </p>
+              )}
+              <div className="px-2 space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = location === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={collapsed ? item.label : undefined}
+                      className={`flex items-center gap-3 mx-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                        active
+                          ? "bg-primary/12 text-primary font-medium border border-primary/15 glow-purple-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04] border border-transparent"
+                      }`}
+                    >
+                      <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? "text-primary" : ""}`} />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">{t("statusUnavailable")}</div>
-          )}
-        </div>
+          ))}
+        </ScrollArea>
 
-        <div className="px-4 py-3 border-b border-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+        {/* Bottom actions */}
+        <div className="p-2 border-t border-white/5 space-y-1">
+          <button
             onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all"
+            title={locale === "en" ? "العربية" : "English"}
           >
-            <Globe className="w-4 h-4" />
-            <span>{locale === "en" ? "العربية" : "English"}</span>
-          </Button>
-        </div>
-
-        <div className="px-4 py-3 border-t border-border mt-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+            <Globe className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span>{locale === "en" ? "العربية" : "English"}</span>}
+          </button>
+          <button
             onClick={() => signOut()}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+            title={t("logout")}
           >
-            <LogOut className="w-4 h-4" />
-            <span>{t("logout")}</span>
-          </Button>
+            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span>{t("logout")}</span>}
+          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = location === item.href;
-            return (
-              <Link key={item.href} href={item.href} className={`flex items-center space-x-3 px-3 py-2.5 rounded-md transition-colors ${active ? "bg-primary/10 text-primary font-medium border border-primary/20 shadow-[inset_0_0_15px_rgba(139,92,246,0.1)]" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}>
-                <Icon className={`w-5 h-5 ${active ? "text-primary" : ""}`} />
-                <span className="text-sm">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Collapse toggle */}
+        <div className="p-2 border-t border-white/5">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex items-center justify-center w-full py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all"
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto bg-black/40">
-        <div className="max-w-7xl mx-auto p-8">
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto relative">
+        {/* Subtle radial gradient at top */}
+        <div className="absolute top-0 left-0 right-0 h-64 bg-radial pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto p-8">
           {children}
         </div>
       </main>

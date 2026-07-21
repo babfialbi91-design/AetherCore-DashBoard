@@ -1,10 +1,12 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/hooks/use-language";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
+import LoginPage from "@/pages/login";
+import { Loader2 } from "lucide-react";
 
 import Layout from "@/components/layout";
 import Overview from "@/pages/overview";
@@ -30,33 +32,76 @@ import EmbedBuilder from "@/pages/embedbuilder";
 
 const queryClient = new QueryClient();
 
-function Router() {
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Redirect to="/login" />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Overview} />
-        <Route path="/leaderboard" component={Leaderboard} />
-        <Route path="/lfg" component={Lfg} />
-        <Route path="/tournaments" component={Tournaments} />
-        <Route path="/shop" component={Shop} />
-        <Route path="/events" component={Events} />
-        <Route path="/daily" component={Daily} />
-        <Route path="/economy" component={Economy} />
-        <Route path="/purchases" component={Purchases} />
-        <Route path="/tickets" component={Tickets} />
-        <Route path="/welcome" component={Welcome} />
-        <Route path="/logs" component={Logs} />
-        <Route path="/levels" component={Levels} />
-        <Route path="/notifications" component={Notifications} />
-        <Route path="/autorules" component={AutoRules} />
-        <Route path="/badwords" component={BadWords} />
-        <Route path="/warnings" component={Warnings} />
-        <Route path="/autoresponses" component={AutoResponses} />
-        <Route path="/announce" component={Announce} />
-        <Route path="/embedbuilder" component={EmbedBuilder} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/login">
+        {session ? <Redirect to="/" /> : <LoginPage />}
+      </Route>
+      <Route>
+        <AuthGuard>
+          <Layout>
+            <Switch>
+              <Route path="/" component={Overview} />
+              <Route path="/leaderboard" component={Leaderboard} />
+              <Route path="/lfg" component={Lfg} />
+              <Route path="/tournaments" component={Tournaments} />
+              <Route path="/shop" component={Shop} />
+              <Route path="/events" component={Events} />
+              <Route path="/daily" component={Daily} />
+              <Route path="/economy" component={Economy} />
+              <Route path="/purchases" component={Purchases} />
+              <Route path="/tickets" component={Tickets} />
+              <Route path="/welcome" component={Welcome} />
+              <Route path="/logs" component={Logs} />
+              <Route path="/levels" component={Levels} />
+              <Route path="/notifications" component={Notifications} />
+              <Route path="/autorules" component={AutoRules} />
+              <Route path="/badwords" component={BadWords} />
+              <Route path="/warnings" component={Warnings} />
+              <Route path="/autoresponses" component={AutoResponses} />
+              <Route path="/announce" component={Announce} />
+              <Route path="/embedbuilder" component={EmbedBuilder} />
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+        </AuthGuard>
+      </Route>
+    </Switch>
   );
 }
 
@@ -67,7 +112,7 @@ function App() {
         <LanguageProvider>
           <AuthProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
+              <AppRoutes />
             </WouterRouter>
             <Toaster />
           </AuthProvider>
