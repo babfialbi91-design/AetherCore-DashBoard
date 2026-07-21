@@ -17,6 +17,15 @@ import AutoResponses from "@/pages/autoresponses";
 import Announce from "@/pages/announce";
 import Daily from "@/pages/daily";
 import Tickets from "@/pages/tickets";
+import Economy from "@/pages/economy";
+import Purchases from "@/pages/purchases";
+import Welcome from "@/pages/welcome";
+import Logs from "@/pages/logs";
+import Levels from "@/pages/levels";
+import Notifications from "@/pages/notifications";
+import AutoRules from "@/pages/autorules";
+import BadWords from "@/pages/badwords";
+import EmbedBuilder from "@/pages/embedbuilder";
 
 const queryClient = new QueryClient();
 
@@ -30,11 +39,20 @@ function Router() {
         <Route path="/tournaments" component={Tournaments} />
         <Route path="/shop" component={Shop} />
         <Route path="/events" component={Events} />
+        <Route path="/daily" component={Daily} />
+        <Route path="/economy" component={Economy} />
+        <Route path="/purchases" component={Purchases} />
+        <Route path="/tickets" component={Tickets} />
+        <Route path="/welcome" component={Welcome} />
+        <Route path="/logs" component={Logs} />
+        <Route path="/levels" component={Levels} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/autorules" component={AutoRules} />
+        <Route path="/badwords" component={BadWords} />
         <Route path="/warnings" component={Warnings} />
         <Route path="/autoresponses" component={AutoResponses} />
         <Route path="/announce" component={Announce} />
-        <Route path="/daily" component={Daily} />
-        <Route path="/tickets" component={Tickets} />
+        <Route path="/embedbuilder" component={EmbedBuilder} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

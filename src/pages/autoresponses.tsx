@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  useGetBotAutoResponses,
-  useCreateBotAutoResponse,
-  useDeleteBotAutoResponse,
-  getGetBotAutoResponsesQueryKey,
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +12,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Bot, Plus, Zap, Trash2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
 const schema = z.object({
   trigger: z.string().min(1, "Trigger is required"),
   response: z.string().min(1, "Response is required"),
@@ -28,13 +31,27 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function AutoResponses() {
-  const { data, isLoading } = useGetBotAutoResponses();
-  const create = useCreateBotAutoResponse();
-  const remove = useDeleteBotAutoResponse();
+  const { data, isLoading } = useQuery({
+    queryKey: ["autoresponses"],
+    queryFn: () => apiCall<any[]>("/api/bot/autoresponses"),
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const { t } = useLanguage();
+
+  const create = useMutation({
+    mutationFn: (body: { trigger: string; response: string; embedTitle: string | null; embedColor: string | null }) =>
+      apiCall("/api/bot/autoresponses", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) =>
+      apiCall(`/api/bot/autoresponses/${id}`, { method: "DELETE" }),
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -44,19 +61,17 @@ export default function AutoResponses() {
   function onSubmit(values: FormValues) {
     create.mutate(
       {
-        data: {
-          trigger: values.trigger,
-          response: values.response,
-          embedTitle: values.embedTitle || null,
-          embedColor: values.embedColor || null,
-        },
+        trigger: values.trigger,
+        response: values.response,
+        embedTitle: values.embedTitle || null,
+        embedColor: values.embedColor || null,
       },
       {
         onSuccess: () => {
           toast({ title: "Auto-response added" });
           form.reset();
           setShowForm(false);
-          queryClient.invalidateQueries({ queryKey: getGetBotAutoResponsesQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
         },
         onError: () => toast({ title: "Failed to add auto-response", variant: "destructive" }),
       }
@@ -66,11 +81,11 @@ export default function AutoResponses() {
   function onDelete(id: string | null | undefined) {
     if (!id) return;
     remove.mutate(
-      { id },
+      id,
       {
         onSuccess: () => {
           toast({ title: "Auto-response removed" });
-          queryClient.invalidateQueries({ queryKey: getGetBotAutoResponsesQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
         },
         onError: () => toast({ title: "Failed to remove", variant: "destructive" }),
       }

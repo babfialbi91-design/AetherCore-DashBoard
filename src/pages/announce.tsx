@@ -1,4 +1,4 @@
-import { useGetBotChannels, useSendBotAnnouncement } from "@workspace/api-client-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Megaphone, Send } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
 const schema = z.object({
   channelId: z.string().min(1, "Select a channel"),
   message: z.string().min(1, "Message cannot be empty").max(2000, "Max 2000 characters"),
@@ -19,10 +28,20 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function Announce() {
-  const { data: channels, isLoading: channelsLoading } = useGetBotChannels();
-  const send = useSendBotAnnouncement();
+  const { data: channels, isLoading: channelsLoading } = useQuery({
+    queryKey: ["channels"],
+    queryFn: () => apiCall<{ id: string; name: string; type: string }[]>("/api/bot/channels"),
+  });
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  const send = useMutation({
+    mutationFn: (data: { channelId: string; message: string }) =>
+      apiCall<{ ok: boolean; error?: string }>("/api/bot/announce", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -33,7 +52,7 @@ export default function Announce() {
 
   function onSubmit(values: FormValues) {
     send.mutate(
-      { data: { channelId: values.channelId, message: values.message } },
+      { channelId: values.channelId, message: values.message },
       {
         onSuccess: (res) => {
           if (res.ok) {

@@ -1,0 +1,109 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
+import { Bell, Save } from "lucide-react";
+
+async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+const TEMPLATE_KEYS: { key: string; label: string }[] = [
+  { key: "levelUp", label: "Level Up" },
+  { key: "dailyClaim", label: "Daily Claim" },
+  { key: "shopPurchase", label: "Shop Purchase" },
+  { key: "welcome", label: "Welcome" },
+  { key: "boost", label: "Server Boost" },
+];
+
+export default function Notifications() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const [templates, setTemplates] = useState<Record<string, string>>({});
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => apiCall<Record<string, string>>("/api/bot/notifications"),
+  });
+
+  useEffect(() => {
+    if (data) setTemplates(data);
+  }, [data]);
+
+  const saveTemplate = useMutation({
+    mutationFn: (body: { key: string; template: string }) =>
+      apiCall<{ ok: boolean }>("/api/bot/notifications", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast({ title: t("notificationsSaved") });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: () => toast({ title: t("error"), variant: "destructive" }),
+  });
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <Bell className="w-8 h-8 text-primary" />
+          {t("notificationsTitle")}
+        </h2>
+        <p className="text-muted-foreground mt-2">{t("notificationsDesc")}</p>
+      </div>
+
+      <div className="space-y-4">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-40 w-full" />)
+        ) : TEMPLATE_KEYS.length > 0 ? (
+          TEMPLATE_KEYS.map(({ key, label }) => (
+            <Card key={key} className="bg-card/50 border-white/5">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-primary" />
+                  {label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground font-mono">{key}</p>
+                <Textarea
+                  value={templates[key] || ""}
+                  onChange={(e) => setTemplates((prev) => ({ ...prev, [key]: e.target.value }))}
+                  placeholder={`${label} notification template...`}
+                  className="bg-background/50 min-h-[80px] resize-none font-mono text-sm"
+                  data-testid={`input-template-${key}`}
+                />
+                <Button
+                  onClick={() => saveTemplate.mutate({ key, template: templates[key] || "" })}
+                  disabled={saveTemplate.isPending}
+                  data-testid={`button-save-template-${key}`}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveTemplate.isPending ? t("saving") : t("notificationsSave")}
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="bg-card/50 border-white/5">
+            <CardContent className="py-16 text-center text-muted-foreground">
+              <Bell className="w-10 h-10 mx-auto mb-3 opacity-20" />
+              <p>{t("notificationsNoData")}</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

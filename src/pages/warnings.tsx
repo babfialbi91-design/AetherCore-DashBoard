@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useGetBotWarnings, useCreateBotWarning, getGetBotWarningsQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertTriangle, Clock, ShieldAlert, Plus, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useLanguage } from "@/hooks/use-language";
 
+async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
 const warnSchema = z.object({
   userId: z.string().min(1, "Discord User ID is required"),
   reason: z.string().min(1, "Reason is required"),
@@ -24,12 +32,22 @@ const warnSchema = z.object({
 type WarnValues = z.infer<typeof warnSchema>;
 
 export default function Warnings() {
-  const { data: userWarnings, isLoading } = useGetBotWarnings();
-  const createWarning = useCreateBotWarning();
+  const { data: userWarnings, isLoading } = useQuery({
+    queryKey: ["warnings"],
+    queryFn: () => apiCall<any[]>("/api/bot/warnings"),
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const { t } = useLanguage();
+
+  const createWarning = useMutation({
+    mutationFn: (data: { userId: string; reason: string }) =>
+      apiCall<{ ok: boolean; warnCount?: number; error?: string }>("/api/bot/warnings", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  });
 
   const form = useForm<WarnValues>({
     resolver: zodResolver(warnSchema),
@@ -38,14 +56,14 @@ export default function Warnings() {
 
   function onSubmit(values: WarnValues) {
     createWarning.mutate(
-      { data: { userId: values.userId, reason: values.reason } },
+      { userId: values.userId, reason: values.reason },
       {
         onSuccess: (res) => {
           if (res.ok) {
             toast({ title: `Warning issued (total: ${res.warnCount ?? 1})` });
             form.reset();
             setShowForm(false);
-            queryClient.invalidateQueries({ queryKey: getGetBotWarningsQueryKey() });
+            queryClient.invalidateQueries({ queryKey: ["warnings"] });
           } else {
             toast({ title: res.error || "Failed to issue warning", variant: "destructive" });
           }
