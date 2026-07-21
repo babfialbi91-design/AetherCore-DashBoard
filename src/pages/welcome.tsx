@@ -34,7 +34,14 @@ async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  if (!res.ok) {
+    let msg = `Request failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.error) msg += ` - ${body.error}`;
+    } catch {}
+    throw new Error(msg);
+  }
   return res.json();
 }
 
@@ -86,7 +93,7 @@ export default function Welcome() {
       toast({ title: t("configSaved") });
       queryClient.invalidateQueries({ queryKey: ["welcome-config"] });
     },
-    onError: () => toast({ title: t("error"), variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("error"), description: err.message, variant: "destructive" }),
   });
 
   const form = useForm<WelcomeFormValues>({

@@ -17,21 +17,35 @@ export async function onRequest(context) {
 
   const targetUrl = BACKEND + url.pathname + url.search;
 
+  // Convert Cloudflare Headers to plain object for proper forwarding
+  const headers = {};
+  request.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+
   const init = {
     method: request.method,
-    headers: request.headers,
+    headers,
   };
 
   if (!["GET", "HEAD"].includes(request.method)) {
-    init.body = await request.clone().arrayBuffer();
+    // Read body as text to preserve JSON encoding
+    const bodyText = await request.text();
+    init.body = bodyText;
+    // Ensure Content-Type is set for proxied body
+    if (!headers["content-type"] && !headers["Content-Type"]) {
+      init.headers["Content-Type"] = "application/json";
+    }
   }
 
   try {
     const response = await fetch(targetUrl, init);
-    const body = await response.arrayBuffer();
+    const body = await response.text();
     return new Response(body, {
       status: response.status,
-      headers: response.headers,
+      headers: {
+        "Content-Type": response.headers.get("Content-Type") || "application/json",
+      },
     });
   } catch (err) {
     return new Response(
