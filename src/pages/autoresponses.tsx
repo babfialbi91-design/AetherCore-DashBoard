@@ -11,246 +11,119 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Bot, Plus, Zap, Trash2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
+import { PageTransition, Stagger, GlowCard } from "@/components/page-transitions";
 
 async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();
 }
 
-const schema = z.object({
-  trigger: z.string().min(1, "Trigger is required"),
-  response: z.string().min(1, "Response is required"),
-  embedTitle: z.string().optional(),
-  embedColor: z.string().optional(),
-});
-
+const schema = z.object({ trigger: z.string().min(1, "Trigger is required"), response: z.string().min(1, "Response is required"), embedTitle: z.string().optional(), embedColor: z.string().optional() });
 type FormValues = z.infer<typeof schema>;
 
 export default function AutoResponses() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["autoresponses"],
-    queryFn: () => apiCall<any[]>("/api/bot/autoresponses"),
-  });
+  const { data, isLoading } = useQuery({ queryKey: ["autoresponses"], queryFn: () => apiCall<any[]>("/api/bot/autoresponses") });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const { t } = useLanguage();
 
   const create = useMutation({
-    mutationFn: (body: { trigger: string; response: string; embedTitle: string | null; embedColor: string | null }) =>
-      apiCall("/api/bot/autoresponses", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
+    mutationFn: (body: { trigger: string; response: string; embedTitle: string | null; embedColor: string | null }) => apiCall("/api/bot/autoresponses", { method: "POST", body: JSON.stringify(body) }),
   });
 
-  const remove = useMutation({
-    mutationFn: (id: string) =>
-      apiCall(`/api/bot/autoresponses/${id}`, { method: "DELETE" }),
-  });
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { trigger: "", response: "", embedTitle: "", embedColor: "" },
-  });
+  const remove = useMutation({ mutationFn: (id: string) => apiCall(`/api/bot/autoresponses/${id}`, { method: "DELETE" }) });
+  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { trigger: "", response: "", embedTitle: "", embedColor: "" } });
 
   function onSubmit(values: FormValues) {
-    create.mutate(
-      {
-        trigger: values.trigger,
-        response: values.response,
-        embedTitle: values.embedTitle || null,
-        embedColor: values.embedColor || null,
+    create.mutate({ trigger: values.trigger, response: values.response, embedTitle: values.embedTitle || null, embedColor: values.embedColor || null }, {
+      onSuccess: () => {
+        toast({ title: "Auto-response added" });
+        form.reset();
+        setShowForm(false);
+        queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
       },
-      {
-        onSuccess: () => {
-          toast({ title: "Auto-response added" });
-          form.reset();
-          setShowForm(false);
-          queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
-        },
-        onError: () => toast({ title: "Failed to add auto-response", variant: "destructive" }),
-      }
-    );
+      onError: () => toast({ title: "Failed", variant: "destructive" }),
+    });
   }
 
   function onDelete(id: string | null | undefined) {
     if (!id) return;
-    remove.mutate(
-      id,
-      {
-        onSuccess: () => {
-          toast({ title: "Auto-response removed" });
-          queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
-        },
-        onError: () => toast({ title: "Failed to remove", variant: "destructive" }),
-      }
-    );
+    remove.mutate(id, {
+      onSuccess: () => {
+        toast({ title: "Auto-response removed" });
+        queryClient.invalidateQueries({ queryKey: ["autoresponses"] });
+      },
+      onError: () => toast({ title: "Failed", variant: "destructive" }),
+    });
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t("autoResponsesTitle")}</h2>
-          <p className="text-muted-foreground mt-2">{t("autoResponsesDesc")}</p>
+    <div className="space-y-8">
+      <PageTransition>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-gradient-cyber flex items-center gap-3">
+              <Bot className="w-8 h-8 text-cyan" /> {t("autoResponsesTitle")}
+            </h2>
+            <p className="text-muted-foreground/60 mt-2 text-sm">{t("autoResponsesDesc")}</p>
+          </div>
+          <Button onClick={() => setShowForm((v) => !v)}><Plus className="w-4 h-4 mr-2" />{t("addResponse")}</Button>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)} data-testid="button-toggle-form">
-          <Plus className="w-4 h-4 mr-2" />
-          {t("addResponse")}
-        </Button>
-      </div>
+      </PageTransition>
 
       {showForm && (
-        <Card className="bg-card/50 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              {t("newAutoResponse")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="trigger"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("triggerKeyword")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t("triggerPlaceholder")}
-                            {...field}
-                            data-testid="input-trigger"
-                            className="bg-background/50"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="embedTitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("embedTitle")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t("embedTitlePlaceholder")}
-                            {...field}
-                            data-testid="input-embed-title"
-                            className="bg-background/50"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="response"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("responseText")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={t("responsePlaceholder")}
-                          {...field}
-                          data-testid="input-response"
-                          className="bg-background/50"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex gap-3">
-                  <Button type="submit" disabled={create.isPending} data-testid="button-submit-response">
-                    {create.isPending ? t("saving") : t("saveResponse")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => { setShowForm(false); form.reset(); }}
-                    data-testid="button-cancel"
-                  >
-                    {t("cancel")}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="space-y-3">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
-        ) : data && data.length > 0 ? (
-          data.map((ar, i) => (
-            <Card
-              key={ar.id ?? i}
-              className="bg-card/50 border-white/5 hover:border-primary/30 transition-colors"
-              data-testid={`card-autoresponse-${i}`}
-            >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Bot className="w-4 h-4 text-primary" />
+        <PageTransition>
+          <GlowCard color="cyan">
+            <Card className="border-0 bg-transparent">
+              <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Zap className="w-4 h-4 text-cyan" />{t("newAutoResponse")}</CardTitle></CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField control={form.control} name="trigger" render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("triggerKeyword")}</FormLabel><FormControl><Input placeholder={t("triggerPlaceholder")} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="embedTitle" render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("embedTitle")}</FormLabel><FormControl><Input placeholder={t("embedTitlePlaceholder")} {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span
-                          className="font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded"
-                          data-testid={`text-trigger-${i}`}
-                        >
-                          {ar.trigger}
-                        </span>
-                        {ar.embedTitle && (
-                          <span className="text-xs text-muted-foreground italic">{ar.embedTitle}</span>
-                        )}
-                      </div>
-                      <p
-                        className="text-sm text-muted-foreground truncate"
-                        data-testid={`text-response-${i}`}
-                      >
-                        {ar.response}
-                      </p>
+                    <FormField control={form.control} name="response" render={({ field }) => (<FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("responseText")}</FormLabel><FormControl><Input placeholder={t("responsePlaceholder")} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <div className="flex gap-3">
+                      <Button type="submit" disabled={create.isPending}>{create.isPending ? t("saving") : t("saveResponse")}</Button>
+                      <Button variant="outline" type="button" onClick={() => { setShowForm(false); form.reset(); }}>{t("cancel")}</Button>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                    onClick={() => onDelete(ar.id)}
-                    disabled={remove.isPending}
-                    data-testid={`button-delete-${i}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
-          ))
-        ) : (
-          <Card className="bg-card/50 border-white/5">
-            <CardContent className="py-16 text-center text-muted-foreground">
-              <Bot className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p>{t("noAutoResponses")}</p>
-              <p className="text-sm mt-1">{t("noAutoResponsesHint")}</p>
+          </GlowCard>
+        </PageTransition>
+      )}
+
+      <Stagger className="space-y-4" staggerMs={60}>
+        {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />) :
+        data && data.length > 0 ? data.map((ar, i) => (
+          <Card key={ar.id ?? i}>
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-cyan/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Bot className="w-4 h-4 text-cyan" /></div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-mono text-sm bg-cyan/5 text-cyan px-2 py-0.5 rounded">{ar.trigger}</span>
+                      {ar.embedTitle && <span className="text-xs text-muted-foreground/40 italic">{ar.embedTitle}</span>}
+                    </div>
+                    <p className="text-sm text-muted-foreground/50 truncate">{ar.response}</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-red-400 hover:bg-red-400/10 flex-shrink-0" onClick={() => onDelete(ar.id)} disabled={remove.isPending}><Trash2 className="w-4 h-4" /></Button>
+              </div>
             </CardContent>
           </Card>
+        )) : (
+          <div className="py-16 text-center text-muted-foreground/30 rounded-2xl border border-white/[0.04] border-dashed bg-white/[0.01]">
+            <Bot className="w-12 h-12 mx-auto mb-4 opacity-20" /><p>{t("noAutoResponses")}</p><p className="text-sm mt-1">{t("noAutoResponsesHint")}</p>
+          </div>
         )}
-      </div>
+      </Stagger>
     </div>
   );
 }
