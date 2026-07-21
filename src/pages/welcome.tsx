@@ -140,18 +140,29 @@ export default function Welcome() {
     };
   }, []);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Image must be under 5MB", variant: "destructive" });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      form.setValue("imageUrl", reader.result as string, { shouldDirty: true });
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const res = await fetch("/api/bot/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      const { url } = await res.json();
+      form.setValue("imageUrl", url, { shouldDirty: true });
+    } catch (err: any) {
+      toast({ title: t("error"), description: err.message || "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   const handleMoveStart = (el: "avatar" | "name") => (e: React.MouseEvent) => {
@@ -370,9 +381,10 @@ export default function Welcome() {
                     variant="outline"
                     onClick={() => fileRef.current?.click()}
                     className="gap-2"
+                    disabled={uploading}
                   >
                     <Upload className="w-4 h-4" />
-                    {t("welcomeUploadImage") || "Upload Image"}
+                    {uploading ? (t("saving") || "Uploading...") : (t("welcomeUploadImage") || "Upload Image")}
                   </Button>
                   {vals.imageUrl && (
                     <Button
