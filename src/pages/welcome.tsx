@@ -200,15 +200,15 @@ export default function Welcome() {
     width: `${(vals.avatarRadius * 2 / PREVIEW_W) * 100}%`,
     height: `${(vals.avatarRadius * 2 / PREVIEW_H) * 100}%`,
     borderRadius: "50%",
-    border: "3px solid #7c3aed",
-    background: "rgba(124, 58, 237, 0.15)",
+    border: "3px dashed #a78bfa",
+    background: "rgba(167, 139, 250, 0.2)",
     cursor: "grab",
     zIndex: dragging === "avatar" ? 20 : 10,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     transition: dragging === "avatar" ? "none" : "box-shadow 0.2s",
-    boxShadow: dragging === "avatar" ? "0 0 0 3px rgba(124,58,237,0.4)" : "none",
+    boxShadow: dragging === "avatar" ? "0 0 0 3px rgba(167,139,250,0.5)" : "none",
   };
 
   const nameStyle: React.CSSProperties = {
@@ -218,15 +218,15 @@ export default function Welcome() {
     width: `${(vals.nameWidth / PREVIEW_W) * 100}%`,
     height: `${(vals.nameHeight / PREVIEW_H) * 100}%`,
     borderRadius: "8px",
-    border: "3px solid #3b82f6",
-    background: "rgba(59, 130, 246, 0.15)",
+    border: "3px dashed #60a5fa",
+    background: "rgba(96, 165, 250, 0.2)",
     cursor: "grab",
     zIndex: dragging === "name" ? 20 : 10,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     transition: dragging === "name" ? "none" : "box-shadow 0.2s",
-    boxShadow: dragging === "name" ? "0 0 0 3px rgba(59,130,246,0.4)" : "none",
+    boxShadow: dragging === "name" ? "0 0 0 3px rgba(96,165,250,0.5)" : "none",
   };
 
   return (
@@ -377,8 +377,8 @@ export default function Welcome() {
               <CardContent>
                 <div
                   ref={previewRef}
-                  className="relative w-full bg-black/40 rounded-xl border border-white/10 overflow-hidden select-none"
-                  style={{ aspectRatio: `${PREVIEW_W}/${PREVIEW_H}` }}
+                  className="relative w-full bg-black/40 rounded-xl border border-white/10 select-none"
+                  style={{ aspectRatio: `${PREVIEW_W}/${PREVIEW_H}`, minHeight: "200px" }}
                 >
                   {vals.imageUrl ? (
                     <img
