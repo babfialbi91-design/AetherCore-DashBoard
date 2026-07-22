@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/hooks/use-language";
-import { PageTransition, Stagger, GlowCard, ProgressRing } from "@/components/page-transitions";
-import { Coins, Users, ShoppingBag, MessageCircle, TrendingUp, Zap, Shield, Activity, Crown, Flame, Star, Trophy } from "lucide-react";
+import { Stagger, GlowCard } from "@/components/page-transitions";
+import { Coins, Users, ShoppingBag, MessageCircle, Shield, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -59,30 +59,36 @@ export default function Overview() {
   return (
     <div className="space-y-8">
       {/* Hero Banner */}
-      <PageTransition>
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-magenta/[0.08] via-violet/[0.04] to-cyan-bright/[0.06] border border-white/[0.06] p-8 lg:p-10">
+      <div className="animate-card-entrance">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-magenta/[0.08] via-violet/[0.04] to-cyan-bright/[0.06] border border-white/[0.06] p-8 lg:p-10 animate-glow-breathe">
           <div className="absolute inset-0 bg-grid-nebula opacity-30" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-magenta/[0.08] rounded-full blur-[80px]" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet/[0.06] rounded-full blur-[60px]" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-magenta/[0.1] rounded-full blur-[100px] animate-float-slow" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-violet/[0.08] rounded-full blur-[80px] animate-float" style={{ animationDelay: "-2s" }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-cyan-bright/[0.05] rounded-full blur-[60px] animate-float-slow" style={{ animationDelay: "-4s" }} />
+          {/* Floating particles */}
+          <div className="absolute top-8 right-20 w-1.5 h-1.5 rounded-full bg-magenta/30 animate-particle-drift" style={{ animationDelay: "0s" }} />
+          <div className="absolute top-16 right-40 w-1 h-1 rounded-full bg-cyan-bright/20 animate-particle-drift" style={{ animationDelay: "-2s" }} />
+          <div className="absolute bottom-12 left-24 w-1 h-1 rounded-full bg-violet/25 animate-particle-drift" style={{ animationDelay: "-4s" }} />
+          <div className="absolute bottom-8 right-32 w-1.5 h-1.5 rounded-full bg-amber/20 animate-particle-drift" style={{ animationDelay: "-1s" }} />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-emerald animate-pulse-neon" />
               <span className="text-[10px] font-black tracking-[0.25em] text-emerald uppercase">{t("online")}</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black text-gradient-nebula mb-3 leading-tight">{t("welcome")}</h1>
+            <h1 className="text-4xl lg:text-5xl font-black text-gradient-nebula mb-3 leading-tight animate-neon-flicker">{t("welcome")}</h1>
             <p className="text-muted-foreground/50 text-base max-w-lg">{t("overviewDesc")}</p>
           </div>
         </div>
-      </PageTransition>
+      </div>
 
       {/* Stat Cards */}
       <Stagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" staggerMs={100}>
-        {statCards.map((stat) => {
+        {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <GlowCard key={stat.label}>
-              <Card className="overflow-hidden card-hover border-white/[0.06]">
-                <div className={`h-1 bg-gradient-to-r ${stat.color}`} />
+              <Card className={`overflow-hidden card-hover border-white/[0.06] animate-card-entrance stagger-${i + 1}`}>
+                <div className={`h-1.5 bg-gradient-to-r ${stat.color}`} />
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div>
@@ -93,7 +99,7 @@ export default function Overview() {
                         <p className="text-3xl font-black stat-number text-foreground/90">{stat.value}</p>
                       )}
                     </div>
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg animate-float-slow`} style={{ animationDelay: `${i * -1.5}s` }}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
@@ -107,7 +113,7 @@ export default function Overview() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Top Users */}
-        <PageTransition delay={300} className="lg:col-span-2">
+        <div className="lg:col-span-2 animate-slide-in-left" style={{ animationDelay: "0.3s" }}>
           <Card className="border-white/[0.06]">
             <div className="p-6 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
@@ -173,10 +179,10 @@ export default function Overview() {
               )}
             </CardContent>
           </Card>
-        </PageTransition>
+        </div>
 
         {/* Quick Stats Sidebar */}
-        <PageTransition delay={400} className="space-y-5">
+        <div className="space-y-5 animate-slide-in-right" style={{ animationDelay: "0.4s" }}>
           {/* Warnings Card */}
           <Card className="border-white/[0.06] overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-rose to-[#E11D48]" />
@@ -247,7 +253,7 @@ export default function Overview() {
               </div>
             </CardContent>
           </Card>
-        </PageTransition>
+        </div>
       </div>
     </div>
   );

@@ -245,6 +245,18 @@
   .animate-rotate-slow { animation: rotateSlow 30s linear infinite; }
   .animate-pulse-neon { animation: pulseNeon 2s ease-in-out infinite; }
   .animate-typing { animation: typing 3s steps(20) infinite; }
+  .animate-page-enter { animation: pageEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+  .animate-glow-breathe { animation: glowBreathe 3s ease-in-out infinite; }
+  .animate-neon-flicker { animation: neonFlicker 4s ease-in-out infinite; }
+  .animate-card-entrance { animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+  .animate-slide-in-left { animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+  .animate-slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+  .animate-zoom-bounce { animation: zoomBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .animate-ripple { animation: ripple 1s ease-out; }
+  .animate-gradient-border { animation: gradientBorder 3s linear infinite; background-size: 300% 300%; }
+  .animate-scan-line { animation: scanLine 3s linear infinite; }
+  .animate-particle-drift { animation: particleDrift 8s ease-in-out infinite; }
+  .animate-rotate-x { animation: rotateX 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
 
   .hover-lift {
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s ease;
@@ -257,6 +269,19 @@
   .hover-glow-magenta:hover { box-shadow: 0 0 25px rgba(255, 0, 110, 0.2); }
   .hover-glow-cyan { transition: box-shadow 0.3s ease; }
   .hover-glow-cyan:hover { box-shadow: 0 0 25px rgba(0, 212, 255, 0.2); }
+  .hover-3d { transition: transform 0.4s ease; transform-style: preserve-3d; }
+  .hover-3d:hover { transform: perspective(800px) rotateY(-2deg) rotateX(2deg) translateY(-4px); }
+  .hover-magnetic { transition: transform 0.3s ease; }
+  .hover-magnetic:hover { transform: scale(1.03); }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-7 { animation-delay: 0.35s; }
+  .stagger-8 { animation-delay: 0.4s; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -279,6 +304,16 @@
 @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 110, 0.1); } 50% { box-shadow: 0 0 35px rgba(255, 0, 110, 0.25); } }
+@keyframes pageEnter { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes glowBreathe { 0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 110, 0.1), 0 0 60px rgba(255, 0, 110, 0.05); } 50% { box-shadow: 0 0 40px rgba(255, 0, 110, 0.2), 0 0 80px rgba(255, 0, 110, 0.1); } }
+@keyframes neonFlicker { 0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; } 20%, 24%, 55% { opacity: 0.6; } }
+@keyframes cardEntrance { from { opacity: 0; transform: translateY(24px) scale(0.97); filter: blur(4px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+@keyframes zoomBounce { from { opacity: 0; transform: scale(0.5); } 60% { transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+@keyframes ripple { from { transform: scale(0); opacity: 0.5; } to { transform: scale(4); opacity: 0; } }
+@keyframes gradientBorder { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes scanLine { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+@keyframes particleDrift { 0%, 100% { transform: translate(0, 0) scale(1); } 25% { transform: translate(10px, -15px) scale(1.1); } 50% { transform: translate(-5px, -25px) scale(0.95); } 75% { transform: translate(15px, -10px) scale(1.05); } }
+@keyframes rotateX { from { opacity: 0; transform: perspective(800px) rotateX(-15deg); } to { opacity: 1; transform: perspective(800px) rotateX(0); } }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
