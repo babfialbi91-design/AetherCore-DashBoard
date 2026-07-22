@@ -60,7 +60,7 @@ export default function Overview() {
     <div className="space-y-8">
       {/* Hero Banner */}
       <div className="animate-card-entrance">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-magenta/[0.08] via-violet/[0.04] to-cyan-bright/[0.06] border border-white/[0.06] p-8 lg:p-10 animate-glow-breathe">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-magenta/[0.08] via-violet/[0.04] to-cyan-bright/[0.06] border border-white/[0.06] p-8 lg:p-10 noise-overlay">
           <div className="absolute inset-0 bg-grid-nebula opacity-30" />
           <div className="absolute top-0 right-0 w-80 h-80 bg-magenta/[0.1] rounded-full blur-[100px] animate-float-slow" />
           <div className="absolute bottom-0 left-0 w-60 h-60 bg-violet/[0.08] rounded-full blur-[80px] animate-float" style={{ animationDelay: "-2s" }} />
@@ -75,7 +75,7 @@ export default function Overview() {
               <div className="w-2 h-2 rounded-full bg-emerald animate-pulse-neon" />
               <span className="text-[10px] font-black tracking-[0.25em] text-emerald uppercase">{t("online")}</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black text-gradient-nebula mb-3 leading-tight animate-neon-flicker">{t("welcome")}</h1>
+            <h1 className="text-4xl lg:text-5xl font-black text-aurora mb-3 leading-tight">{t("welcome")}</h1>
             <p className="text-muted-foreground/50 text-base max-w-lg">{t("overviewDesc")}</p>
           </div>
         </div>

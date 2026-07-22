@@ -274,6 +274,60 @@
   .hover-magnetic { transition: transform 0.3s ease; }
   .hover-magnetic:hover { transform: scale(1.03); }
 
+  .text-glitch {
+    animation: glitch 3s infinite;
+  }
+  .text-aurora {
+    background: linear-gradient(90deg, #FF006E, #8B5CF6, #00D4FF, #10B981, #FFB800, #FF006E);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: auroraFlow 4s linear infinite;
+  }
+  .bg-aurora {
+    background: linear-gradient(135deg, rgba(255,0,110,0.03), rgba(139,92,246,0.03), rgba(0,212,255,0.03), rgba(16,185,129,0.03));
+    background-size: 400% 400%;
+    animation: auroraFlow 8s ease infinite;
+  }
+  .glass-aurora {
+    background: linear-gradient(135deg, rgba(255,0,110,0.03), rgba(139,92,246,0.02), rgba(0,212,255,0.03));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .liquid-morph { animation: liquidMorph 8s ease-in-out infinite; }
+  .electric-border {
+    position: relative;
+    overflow: hidden;
+  }
+  .electric-border::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from var(--angle, 0deg), #FF006E, #8B5CF6, #00D4FF, #FFB800, #FF006E);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: electricSpin 4s linear infinite;
+    pointer-events: none;
+  }
+  .warp-speed { animation: warpSpeed 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .noise-overlay {
+    position: relative;
+  }
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 1;
+  }
+
   .stagger-1 { animation-delay: 0.05s; }
   .stagger-2 { animation-delay: 0.1s; }
   .stagger-3 { animation-delay: 0.15s; }
@@ -282,6 +336,8 @@
   .stagger-6 { animation-delay: 0.3s; }
   .stagger-7 { animation-delay: 0.35s; }
   .stagger-8 { animation-delay: 0.4s; }
+  .stagger-9 { animation-delay: 0.45s; }
+  .stagger-10 { animation-delay: 0.5s; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -314,6 +370,17 @@
 @keyframes scanLine { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
 @keyframes particleDrift { 0%, 100% { transform: translate(0, 0) scale(1); } 25% { transform: translate(10px, -15px) scale(1.1); } 50% { transform: translate(-5px, -25px) scale(0.95); } 75% { transform: translate(15px, -10px) scale(1.05); } }
 @keyframes rotateX { from { opacity: 0; transform: perspective(800px) rotateX(-15deg); } to { opacity: 1; transform: perspective(800px) rotateX(0); } }
+@keyframes glitch { 0%, 90%, 100% { transform: translate(0); } 91% { transform: translate(-2px, 1px); } 93% { transform: translate(2px, -1px); } 95% { transform: translate(-1px, -1px); } 97% { transform: translate(1px, 2px); } }
+@keyframes auroraFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes liquidMorph { 0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; } 50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; } }
+@keyframes electricSpin { from { --angle: 0deg; } to { --angle: 360deg; } }
+@keyframes warpSpeed { from { opacity: 0; transform: scale(0.8) translateY(20px); filter: blur(10px); } to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
