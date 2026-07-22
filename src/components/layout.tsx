@@ -1,178 +1,105 @@
-import React from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  LayoutDashboard, Trophy, Gamepad2, Swords, AlertTriangle, MessageSquare,
-  Megaphone, Loader2, Server, ShoppingBag, PartyPopper, Calendar, Ticket,
-  Globe, LogOut, Wallet, ShoppingCart, UserPlus, ScrollText, TrendingUp,
-  Bell, GitBranch, ShieldBan, Paintbrush, ChevronLeft, ChevronRight, Zap,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  LayoutDashboard, Trophy, Gamepad2, Swords, ShoppingBag, Calendar, Coins,
+  ShoppingCart, Ticket, MessageCircleWarning, ScrollText, TrendingUp, Bell,
+  GitBranch, ShieldBan, AlertTriangle, Bot, Megaphone, Palette, ChevronLeft,
+  ChevronRight, LogOut, Globe, Image, PanelLeftClose, PanelLeft
+} from "lucide-react";
 
-async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
-}
+const navSections = [
+  { label: "MAIN", items: [
+    { path: "/", icon: LayoutDashboard, labelKey: "navOverview" },
+    { path: "/leaderboard", icon: Trophy, labelKey: "navLeaderboard" },
+    { path: "/levels", icon: TrendingUp, labelKey: "navLevels" },
+  ]},
+  { label: "ECONOMY", items: [
+    { path: "/economy", icon: Coins, labelKey: "navEconomy" },
+    { path: "/shop", icon: ShoppingBag, labelKey: "navShop" },
+    { path: "/purchases", icon: ShoppingCart, labelKey: "navPurchases" },
+    { path: "/daily", icon: Calendar, labelKey: "navDaily" },
+  ]},
+  { label: "COMMUNITY", items: [
+    { path: "/lfg", icon: Gamepad2, labelKey: "navLfg" },
+    { path: "/tournaments", icon: Swords, labelKey: "navTournaments" },
+    { path: "/events", icon: Calendar, labelKey: "navEvents" },
+    { path: "/tickets", icon: Ticket, labelKey: "navTickets" },
+  ]},
+  { label: "MODERATION", items: [
+    { path: "/warnings", icon: AlertTriangle, labelKey: "navWarnings" },
+    { path: "/badwords", icon: ShieldBan, labelKey: "navBadwords" },
+    { path: "/autorules", icon: GitBranch, labelKey: "navAutorules" },
+    { path: "/logs", icon: ScrollText, labelKey: "navLogs" },
+  ]},
+  { label: "CUSTOMIZATION", items: [
+    { path: "/welcome", icon: MessageCircleWarning, labelKey: "navWelcome" },
+    { path: "/notifications", icon: Bell, labelKey: "navNotifications" },
+    { path: "/autoresponses", icon: Bot, labelKey: "navAutoResponses" },
+    { path: "/embedbuilder", icon: Palette, labelKey: "navEmbedBuilder" },
+    { path: "/announce", icon: Megaphone, labelKey: "navAnnounce" },
+  ]},
+];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [collapsed, setCollapsed] = React.useState(false);
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["stats"],
-    queryFn: () => apiCall<{ tag: string; id: string; avatar: string; status: string; ping: number; guildCount: number; guildName: string; memberCount: number; commandCount: number; uptime: number }>("/api/bot/stats"),
-  });
-  const { locale, setLocale, t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { signOut } = useAuth();
-  const isOnline = stats?.status === "online";
-
-  const navSections = [
-    {
-      label: "COMMAND CENTER",
-      items: [
-        { href: "/", label: t("overview"), icon: LayoutDashboard },
-        { href: "/leaderboard", label: t("leaderboard"), icon: Trophy },
-        { href: "/levels", label: t("levels"), icon: TrendingUp },
-        { href: "/economy", label: t("economy"), icon: Wallet },
-      ],
-    },
-    {
-      label: "ENGAGE",
-      items: [
-        { href: "/lfg", label: t("lfgSessions"), icon: Gamepad2 },
-        { href: "/tournaments", label: t("tournaments"), icon: Swords },
-        { href: "/events", label: t("events"), icon: PartyPopper },
-        { href: "/daily", label: t("daily"), icon: Calendar },
-      ],
-    },
-    {
-      label: "MANAGE",
-      items: [
-        { href: "/shop", label: t("shop"), icon: ShoppingBag },
-        { href: "/purchases", label: t("purchases"), icon: ShoppingCart },
-        { href: "/tickets", label: t("tickets"), icon: Ticket },
-        { href: "/welcome", label: t("welcome"), icon: UserPlus },
-      ],
-    },
-    {
-      label: "MODERATION",
-      items: [
-        { href: "/warnings", label: t("warnings"), icon: AlertTriangle },
-        { href: "/logs", label: t("logs"), icon: ScrollText },
-        { href: "/badwords", label: t("badWords"), icon: ShieldBan },
-        { href: "/autorules", label: t("autoRules"), icon: GitBranch },
-      ],
-    },
-    {
-      label: "COMMS",
-      items: [
-        { href: "/notifications", label: t("notifications"), icon: Bell },
-        { href: "/autoresponses", label: t("autoResponses"), icon: MessageSquare },
-        { href: "/announce", label: t("announcements"), icon: Megaphone },
-        { href: "/embedbuilder", label: t("embedBuilder"), icon: Paintbrush },
-      ],
-    },
-  ];
-
-  const sidebarW = collapsed ? "w-[72px]" : "w-64";
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`flex h-screen bg-background text-foreground overflow-hidden ${locale === "ar" ? "rtl" : "ltr"}`}>
+    <div className="flex h-screen overflow-hidden bg-mesh">
+      {/* Floating orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-magenta/[0.03] blur-[120px] animate-float-slow" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet/[0.04] blur-[100px] animate-float" style={{ animationDelay: "-3s" }} />
+        <div className="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-cyan-bright/[0.02] blur-[80px] animate-float-slow" style={{ animationDelay: "-5s" }} />
+      </div>
+
       {/* Sidebar */}
-      <aside className={`${sidebarW} flex flex-col z-10 transition-all duration-300 ease-out border-r border-white/[0.04] relative`}>
-        {/* Animated gradient top border */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan/40 to-transparent" />
-
-        {/* Sidebar glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan/5 rounded-full blur-[80px] pointer-events-none" />
-
+      <aside className={`relative z-10 flex flex-col border-r border-white/[0.04] bg-[#08060E]/80 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${collapsed ? "w-[68px]" : "w-[240px]"}`}>
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 relative">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan/20 to-electric/10 flex items-center justify-center flex-shrink-0 border border-cyan/20 relative overflow-hidden">
-              <Zap className="w-5 h-5 text-cyan relative z-10" />
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan/10 to-transparent" />
-            </div>
-            {!collapsed && (
-              <div>
-                <h1 className="font-bold text-base tracking-wider text-gradient-cyber">AETHERCORE</h1>
-                <p className="text-[9px] text-muted-foreground/50 font-mono tracking-widest">DASHBOARD</p>
-              </div>
-            )}
+        <div className="flex items-center gap-3 px-4 h-16 border-b border-white/[0.04] shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-magenta via-violet to-cyan-bright flex items-center justify-center shrink-0 shadow-lg shadow-magenta/20">
+            <span className="text-white font-black text-sm tracking-tighter">A</span>
           </div>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="text-sm font-bold tracking-tight text-foreground/90 truncate">AetherCore</p>
+              <p className="text-[10px] text-muted-foreground/40 font-mono uppercase tracking-widest">Dashboard</p>
+            </div>
+          )}
         </div>
 
-        {/* Bot Status */}
-        {!collapsed && (
-          <div className="px-3 mb-3">
-            <div className="rounded-xl p-3 bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.04] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-cyan/5 rounded-full blur-[40px] pointer-events-none" />
-              {isLoading ? (
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-9 h-9 animate-spin text-muted-foreground" />
-                  <div className="space-y-2 flex-1">
-                    <div className="h-3.5 w-20 bg-white/5 rounded animate-pulse" />
-                    <div className="h-3 w-16 bg-white/5 rounded animate-pulse" />
-                  </div>
-                </div>
-              ) : stats ? (
-                <div className="flex items-center gap-3 relative z-10">
-                  <div className="relative">
-                    <Avatar className="w-9 h-9 border border-cyan/20">
-                      <AvatarImage src={stats.avatar ?? undefined} />
-                      <AvatarFallback className="text-xs bg-cyan/10 text-cyan">{(stats.tag ?? "??").substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${isOnline ? "bg-cyan" : "bg-red-500"}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{stats.tag}</p>
-                    <p className="text-[10px] text-muted-foreground/60 font-mono">
-                      {isOnline ? "ONLINE" : "OFFLINE"} · {stats.memberCount?.toLocaleString()} members
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground/50">{t("statusUnavailable")}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <ScrollArea className="flex-1 py-2">
-          {navSections.map((section, si) => (
-            <div key={si} className="mb-4">
+        {/* Nav */}
+        <ScrollArea className="flex-1 py-3 px-2">
+          {navSections.map((section) => (
+            <div key={section.label} className="mb-4">
               {!collapsed && (
-                <p className="px-5 mb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30">
-                  {section.label}
-                </p>
+                <p className="px-3 mb-1.5 text-[9px] font-black tracking-[0.2em] text-muted-foreground/25 uppercase">{section.label}</p>
               )}
-              <div className="px-2 space-y-0.5">
+              <div className="space-y-0.5">
                 {section.items.map((item) => {
+                  const active = location === item.path;
                   const Icon = item.icon;
-                  const active = location === item.href;
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={collapsed ? item.label : undefined}
-                      className={`flex items-center gap-3 mx-1 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 relative group ${
+                    <Link key={item.path} href={item.path}>
+                      <div className={`group flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all duration-300 ${
                         active
-                          ? "text-cyan font-medium"
-                          : "text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.03]"
-                      }`}
-                    >
-                      {active && (
-                        <div className="absolute inset-0 rounded-xl bg-cyan/[0.06] border border-cyan/10" />
-                      )}
-                      <Icon className={`w-[18px] h-[18px] flex-shrink-0 relative z-10 ${active ? "text-cyan" : ""}`} />
-                      {!collapsed && <span className="relative z-10 truncate">{item.label}</span>}
-                      {active && !collapsed && (
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-cyan rounded-l-full" />
-                      )}
+                          ? "bg-magenta/10 text-magenta"
+                          : "text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.03]"
+                      }`}>
+                        <Icon className={`w-[18px] h-[18px] shrink-0 transition-all duration-300 ${active ? "drop-shadow-[0_0_8px_rgba(255,0,110,0.5)]" : "group-hover:scale-110"}`} />
+                        {!collapsed && (
+                          <span className="text-[13px] font-medium truncate">{t(item.labelKey)}</span>
+                        )}
+                        {active && !collapsed && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-magenta animate-pulse-neon" />
+                        )}
+                      </div>
                     </Link>
                   );
                 })}
@@ -182,49 +109,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </ScrollArea>
 
         {/* Bottom */}
-        <div className="p-2 border-t border-white/[0.04] space-y-1">
+        <div className="border-t border-white/[0.04] p-2 space-y-1 shrink-0">
           <button
-            onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.03] transition-all"
-            title={locale === "en" ? "العربية" : "English"}
+            onClick={() => setLanguage(language === "en" ? "ar" : "en")}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.03] transition-all"
           >
-            <Globe className="w-[18px] h-[18px] flex-shrink-0" />
-            {!collapsed && <span>{locale === "en" ? "العربية" : "English"}</span>}
+            <Globe className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && <span className="text-[13px] font-medium">{language === "en" ? "العربية" : "English"}</span>}
           </button>
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-muted-foreground/60 hover:text-red-400 hover:bg-red-500/[0.06] transition-all"
-            title={t("logout")}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground/40 hover:text-rose hover:bg-rose/[0.06] transition-all"
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
-            {!collapsed && <span>{t("logout")}</span>}
+            <LogOut className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && <span className="text-[13px] font-medium">{t("logout")}</span>}
           </button>
-        </div>
-
-        {/* Collapse */}
-        <div className="p-2 border-t border-white/[0.04]">
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex items-center justify-center w-full py-2 rounded-xl text-muted-foreground/40 hover:text-foreground hover:bg-white/[0.03] transition-all"
+            onClick={() => setCollapsed((v) => !v)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.03] transition-all"
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {collapsed ? <PanelLeft className="w-[18px] h-[18px] shrink-0" /> : <PanelLeftClose className="w-[18px] h-[18px] shrink-0" />}
+            {!collapsed && <span className="text-[13px] font-medium">{t("collapse")}</span>}
           </button>
         </div>
-
-        {/* Bottom gradient line */}
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan/20 to-transparent" />
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto relative">
-        {/* Background grid */}
-        <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
-        {/* Top radial glow */}
-        <div className="absolute top-0 left-0 right-0 h-80 bg-radial-cyan pointer-events-none" />
-        {/* Noise overlay */}
-        <div className="absolute inset-0 bg-noise pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto p-8">
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto relative z-10">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
           {children}
         </div>
       </main>

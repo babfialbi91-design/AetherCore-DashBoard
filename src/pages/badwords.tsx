@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
-import { ShieldBan, Plus, Trash2 } from "lucide-react";
+import { ShieldBan, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { PageTransition, Stagger, GlowCard } from "@/components/page-transitions";
 
 async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
@@ -20,6 +21,14 @@ type BadWord = { id: string; word: string; action: string; timeoutMinutes: numbe
 type FormState = { word: string; action: string; timeoutMinutes: string };
 const ACTIONS = ["delete", "warn", "timeout", "kick", "ban"] as const;
 
+const ACTION_COLORS: Record<string, string> = {
+  delete: "bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/20",
+  warn: "bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20",
+  timeout: "bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20",
+  kick: "bg-[#FF006E]/10 text-[#FF006E] border-[#FF006E]/20",
+  ban: "bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/20",
+};
+
 export default function Badwords() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -29,7 +38,8 @@ export default function Badwords() {
   const { data: badwords, isLoading } = useQuery({ queryKey: ["badwords"], queryFn: () => apiCall<BadWord[]>("/api/bot/badwords") });
 
   const createWord = useMutation({
-    mutationFn: (body: { word: string; action: string; timeoutMinutes?: number }) => apiCall<BadWord>("/api/bot/badwords", { method: "POST", body: JSON.stringify(body) }),
+    mutationFn: (body: { word: string; action: string; timeoutMinutes?: number }) =>
+      apiCall<BadWord>("/api/bot/badwords", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: () => {
       toast({ title: t("success") });
       queryClient.invalidateQueries({ queryKey: ["badwords"] });
@@ -56,7 +66,14 @@ export default function Badwords() {
   }
 
   function actionLabel(action: string) {
-    switch (action) { case "delete": return t("badwordsActionDelete"); case "warn": return t("badwordsActionWarn"); case "timeout": return t("badwordsActionTimeout"); case "kick": return t("badwordsActionKick"); case "ban": return t("badwordsActionBan"); default: return action; }
+    switch (action) {
+      case "delete": return t("badwordsActionDelete");
+      case "warn": return t("badwordsActionWarn");
+      case "timeout": return t("badwordsActionTimeout");
+      case "kick": return t("badwordsActionKick");
+      case "ban": return t("badwordsActionBan");
+      default: return action;
+    }
   }
 
   return (
@@ -64,43 +81,71 @@ export default function Badwords() {
       <PageTransition>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-gradient-pink flex items-center gap-3">
-              <ShieldBan className="w-8 h-8 text-red-400" /> {t("badwordsTitle")}
+            <h2 className="text-3xl font-bold tracking-tight text-gradient-magenta flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#F43F5E]/10 flex items-center justify-center animate-float">
+                <ShieldBan className="w-5 h-5 text-[#F43F5E]" />
+              </div>
+              {t("badwordsTitle")}
             </h2>
             <p className="text-muted-foreground/60 mt-2 text-sm">{t("badwordsDesc")}</p>
           </div>
-          <Button onClick={() => setShowForm((v) => !v)}><Plus className="w-4 h-4 mr-2" />{t("badwordsAdd")}</Button>
+          <Button onClick={() => setShowForm((v) => !v)} className="rounded-xl bg-[#F43F5E]/10 hover:bg-[#F43F5E]/20 text-[#F43F5E] border border-[#F43F5E]/20">
+            <Plus className="w-4 h-4 mr-2" />{t("badwordsAdd")}
+          </Button>
         </div>
       </PageTransition>
 
       {showForm && (
         <PageTransition>
-          <GlowCard color="red">
-            <Card className="border-0 bg-transparent">
-              <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ShieldBan className="w-4 h-4 text-red-400" />{t("badwordsAdd")}</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+          <GlowCard color="magenta">
+            <Card className="glass rounded-3xl border-white/[0.06] overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShieldBan className="w-4 h-4 text-[#F43F5E]" />{t("badwordsAdd")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1 block">{t("badwordsWord")}</label>
-                    <Input value={form.word} onChange={(e) => setForm((prev) => ({ ...prev, word: e.target.value }))} placeholder="Enter word..." className="font-mono" />
+                    <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1.5 block">{t("badwordsWord")}</label>
+                    <Input
+                      value={form.word}
+                      onChange={(e) => setForm((prev) => ({ ...prev, word: e.target.value }))}
+                      placeholder="Enter word..."
+                      className="font-mono rounded-xl bg-white/[0.03] border-white/[0.06]"
+                    />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1 block">{t("badwordsAction")}</label>
+                    <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1.5 block">{t("badwordsAction")}</label>
                     <Select value={form.action} onValueChange={(val) => setForm((prev) => ({ ...prev, action: val }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{ACTIONS.map((a) => (<SelectItem key={a} value={a}>{actionLabel(a)}</SelectItem>))}</SelectContent>
+                      <SelectTrigger className="rounded-xl bg-white/[0.03] border-white/[0.06]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ACTIONS.map((a) => (<SelectItem key={a} value={a}>{actionLabel(a)}</SelectItem>))}
+                      </SelectContent>
                     </Select>
                   </div>
                   {form.action === "timeout" && (
-                    <div>
-                      <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1 block">{t("badwordsTimeout")}</label>
-                      <Input type="number" min={1} value={form.timeoutMinutes} onChange={(e) => setForm((prev) => ({ ...prev, timeoutMinutes: e.target.value }))} placeholder="Minutes" />
+                    <div className="animate-slide-up">
+                      <label className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider mb-1.5 block">{t("badwordsTimeout")}</label>
+                      <Input
+                        type="number" min={1}
+                        value={form.timeoutMinutes}
+                        onChange={(e) => setForm((prev) => ({ ...prev, timeoutMinutes: e.target.value }))}
+                        placeholder="Minutes"
+                        className="rounded-xl bg-white/[0.03] border-white/[0.06]"
+                      />
                     </div>
                   )}
                 </div>
-                <div className="flex gap-3">
-                  <Button onClick={handleCreate} disabled={createWord.isPending || !form.word.trim()}>{createWord.isPending ? t("loading") : t("badwordsAdd")}</Button>
-                  <Button variant="outline" onClick={() => { setShowForm(false); setForm({ word: "", action: "delete", timeoutMinutes: "" }); }}>{t("cancel")}</Button>
+                <div className="flex gap-3 pt-1">
+                  <Button onClick={handleCreate} disabled={createWord.isPending || !form.word.trim()} className="rounded-xl bg-[#F43F5E]/10 hover:bg-[#F43F5E]/20 text-[#F43F5E] border border-[#F43F5E]/20">
+                    {createWord.isPending ? t("loading") : t("badwordsAdd")}
+                  </Button>
+                  <Button variant="outline" onClick={() => { setShowForm(false); setForm({ word: "", action: "delete", timeoutMinutes: "" }); }} className="rounded-xl border-white/[0.06] bg-white/[0.02]">
+                    {t("cancel")}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -109,28 +154,45 @@ export default function Badwords() {
       )}
 
       <Stagger className="space-y-4" staggerMs={80}>
-        {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />) :
+        {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-3xl" />) :
         badwords && badwords.length > 0 ? badwords.map((bw) => (
-          <Card key={bw.id}>
+          <Card key={bw.id} className="rounded-3xl border-white/[0.06] bg-white/[0.02] glass hover:bg-white/[0.03] transition-colors">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0"><ShieldBan className="w-4 h-4 text-red-400" /></div>
+                  <div className="w-10 h-10 rounded-xl bg-[#F43F5E]/10 flex items-center justify-center flex-shrink-0">
+                    <ShieldBan className="w-4.5 h-4.5 text-[#F43F5E]" />
+                  </div>
                   <div className="min-w-0">
-                    <span className="font-mono text-sm bg-white/[0.03] px-2 py-0.5 rounded">{bw.word}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground/40">{actionLabel(bw.action)}</span>
-                      {bw.action === "timeout" && bw.timeoutMinutes != null && <span className="text-xs text-muted-foreground/40">({bw.timeoutMinutes}m)</span>}
+                    <span className="font-mono text-sm bg-white/[0.04] text-[#F43F5E]/80 px-3 py-1 rounded-xl border border-[#F43F5E]/10">{bw.word}</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className={`text-[10px] rounded-lg border ${ACTION_COLORS[bw.action] || "bg-white/[0.04] text-muted-foreground/50 border-white/[0.06]"}`}>
+                        {actionLabel(bw.action)}
+                      </Badge>
+                      {bw.action === "timeout" && bw.timeoutMinutes != null && (
+                        <span className="text-xs text-muted-foreground/40 font-mono">{bw.timeoutMinutes}m</span>
+                      )}
                     </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-red-400 hover:bg-red-400/10 flex-shrink-0" onClick={() => deleteWord.mutate(bw.id)} disabled={deleteWord.isPending}><Trash2 className="w-4 h-4" /></Button>
+                <Button
+                  variant="ghost" size="icon"
+                  className="text-muted-foreground/40 hover:text-[#F43F5E] hover:bg-[#F43F5E]/10 flex-shrink-0 rounded-xl"
+                  onClick={() => deleteWord.mutate(bw.id)}
+                  disabled={deleteWord.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
         )) : (
-          <div className="py-16 text-center text-muted-foreground/30 rounded-2xl border border-white/[0.04] border-dashed bg-white/[0.01]">
-            <ShieldBan className="w-12 h-12 mx-auto mb-4 opacity-20" /><p>{t("badwordsNoData")}</p>
+          <div className="py-20 text-center rounded-3xl border border-dashed border-white/[0.06] bg-white/[0.01] animate-fade-in">
+            <div className="w-16 h-16 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="w-8 h-8 text-[#10B981]/60" />
+            </div>
+            <p className="text-muted-foreground/30 text-sm font-medium">{t("badwordsNoData")}</p>
+            <p className="text-muted-foreground/20 text-xs mt-1">No filtered words yet</p>
           </div>
         )}
       </Stagger>
