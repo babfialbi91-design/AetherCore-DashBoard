@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
-import { getTheme, setTheme, getSettings, saveSettings } from "@/lib/theme-store";
+import { getTheme, setTheme, getSettings, saveSettings, applyColorPreset } from "@/lib/theme-store";
 import { Settings, Palette, Monitor, Eye, Layout, Sparkles, Save, Check, LayoutDashboard, Bell, Shield, Users, Coins, ShoppingBag } from "lucide-react";
 
 const COLOR_PRESETS = [
@@ -48,6 +48,7 @@ export default function SettingsPage() {
   };
 
   const updateColor = (preset: typeof COLOR_PRESETS[0]) => {
+    applyColorPreset(preset.name);
     const next = { ...settings, colorPreset: preset.name };
     setSettings(next);
     saveSettings(next);

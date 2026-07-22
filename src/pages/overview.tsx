@@ -6,6 +6,8 @@ import { Stagger, GlowCard } from "@/components/page-transitions";
 import { Coins, Users, ShoppingBag, MessageCircle, Shield, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { getSettings } from "@/lib/theme-store";
+import { useState, useEffect } from "react";
 
 async function apiCall<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
@@ -15,6 +17,20 @@ async function apiCall<T>(url: string): Promise<T> {
 
 export default function Overview() {
   const { t } = useLanguage();
+  const [settings, setSettings] = useState(getSettings);
+
+  useEffect(() => {
+    const handler = () => setSettings(getSettings());
+    window.addEventListener("settings-changed", handler);
+    return () => window.removeEventListener("settings-changed", handler);
+  }, []);
+
+  const showStats = settings.overview?.showStats !== false;
+  const showLeaderboard = settings.overview?.showLeaderboard !== false;
+  const showWarnings = settings.overview?.showWarnings !== false;
+  const showTickets = settings.overview?.showTickets !== false;
+  const showEconomy = settings.overview?.showEconomy !== false;
+  const showShop = settings.overview?.showShop !== false;
 
   const { data: economy, isLoading: loadingEconomy } = useQuery({
     queryKey: ["economy"],
@@ -82,39 +98,42 @@ export default function Overview() {
       </div>
 
       {/* Stat Cards */}
-      <Stagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" staggerMs={100}>
-        {statCards.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <GlowCard key={stat.label}>
-              <Card className={`overflow-hidden card-hover border-white/[0.06] animate-card-entrance stagger-${i + 1}`}>
-                <div className={`h-1.5 bg-gradient-to-r ${stat.color}`} />
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-[10px] font-black tracking-[0.2em] text-muted-foreground/30 uppercase mb-2">{stat.label}</p>
-                      {stat.loading ? (
-                        <Skeleton className="h-9 w-24" />
-                      ) : (
-                        <p className="text-3xl font-black stat-number text-foreground/90">{stat.value}</p>
-                      )}
+      {showStats && (
+        <Stagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" staggerMs={100}>
+          {statCards.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <GlowCard key={stat.label}>
+                <Card className={`overflow-hidden card-hover border-white/[0.06] animate-card-entrance stagger-${i + 1}`}>
+                  <div className={`h-1.5 bg-gradient-to-r ${stat.color}`} />
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[10px] font-black tracking-[0.2em] text-muted-foreground/30 uppercase mb-2">{stat.label}</p>
+                        {stat.loading ? (
+                          <Skeleton className="h-9 w-24" />
+                        ) : (
+                          <p className="text-3xl font-black stat-number text-foreground/90">{stat.value}</p>
+                        )}
+                      </div>
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg animate-float-slow`} style={{ animationDelay: `${i * -1.5}s` }}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg animate-float-slow`} style={{ animationDelay: `${i * -1.5}s` }}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </GlowCard>
-          );
-        })}
-      </Stagger>
+                  </CardContent>
+                </Card>
+              </GlowCard>
+            );
+          })}
+        </Stagger>
+      )}
 
       {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className={`grid gap-6 ${showLeaderboard ? "lg:grid-cols-3" : ""}`}>
         {/* Top Users */}
-        <div className="lg:col-span-2 animate-slide-in-left" style={{ animationDelay: "0.3s" }}>
-          <Card className="border-white/[0.06]">
+        {showLeaderboard && (
+          <div className="lg:col-span-2 animate-slide-in-left" style={{ animationDelay: "0.3s" }}>
+            <Card className="border-white/[0.06]">
             <div className="p-6 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber to-[#F59E0B] flex items-center justify-center">
@@ -180,10 +199,13 @@ export default function Overview() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Quick Stats Sidebar */}
+        {(showWarnings || showTickets || showEconomy) && (
         <div className="space-y-5 animate-slide-in-right" style={{ animationDelay: "0.4s" }}>
           {/* Warnings Card */}
+          {showWarnings && (
           <Card className="border-white/[0.06] overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-rose to-[#E11D48]" />
             <CardContent className="p-5">
@@ -201,8 +223,10 @@ export default function Overview() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Tickets Overview */}
+          {showTickets && (
           <Card className="border-white/[0.06] overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-violet to-[#7C3AED]" />
             <CardContent className="p-5">
@@ -227,8 +251,10 @@ export default function Overview() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Economy Pulse */}
+          {showEconomy && (
           <Card className="border-white/[0.06] overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-amber to-[#F59E0B]" />
             <CardContent className="p-5">
@@ -253,7 +279,9 @@ export default function Overview() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
+        )}
       </div>
     </div>
   );

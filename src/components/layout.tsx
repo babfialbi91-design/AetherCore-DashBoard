@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getTheme, getSettings } from "@/lib/theme-store";
+import { getTheme, getSettings, applyAllSettings } from "@/lib/theme-store";
 import {
   LayoutDashboard, Trophy, Gamepad2, Swords, ShoppingBag, Calendar, Coins,
   ShoppingCart, Ticket, MessageCircleWarning, ScrollText, TrendingUp, Bell,
@@ -364,6 +364,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState(getTheme);
 
   useEffect(() => {
+    applyAllSettings();
+
     fetch("/bot/profile", { headers: { "Content-Type": "application/json" } })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => { if (data) setBotProfile(data); })
