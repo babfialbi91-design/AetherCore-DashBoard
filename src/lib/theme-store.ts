@@ -44,9 +44,9 @@ export function applyColorPreset(presetName: string) {
   const preset = COLOR_MAP[presetName];
   if (!preset) return;
   const root = document.documentElement;
-  root.style.setProperty("--color-magenta", preset.primary);
-  root.style.setProperty("--color-cyan-bright", preset.accent);
-  root.style.setProperty("--color-violet", preset.secondary);
+  root.style.setProperty("--preset-primary", preset.primary);
+  root.style.setProperty("--preset-accent", preset.accent);
+  root.style.setProperty("--preset-secondary", preset.secondary);
 }
 
 export function applyAllSettings() {
