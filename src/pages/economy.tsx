@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,8 +11,8 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
-import { Wallet, Search, Coins, TrendingUp, ArrowUpRight, Crown, Medal, Award } from "lucide-react";
-import { PageTransition, Stagger, GlowCard, ProgressRing } from "@/components/page-transitions";
+import { Wallet, Search, Coins } from "lucide-react";
+import { PageTransition, Stagger, GlowCard } from "@/components/page-transitions";
 
 type EconomyEntry = { userId: string; balance: number; username?: string; avatar?: string };
 
@@ -23,10 +24,6 @@ async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
 
 const balanceSchema = z.object({ userId: z.string().min(1), balance: z.coerce.number().min(0) });
 type BalanceFormValues = z.infer<typeof balanceSchema>;
-
-const rankIcons = [Crown, Medal, Award];
-const rankColors = ["text-amber", "text-[#C0C0C0]", "text-amber/60"];
-const rankBgs = ["bg-amber/15", "bg-[#C0C0C0]/10", "bg-amber/5"];
 
 export default function Economy() {
   const queryClient = useQueryClient();
@@ -49,179 +46,109 @@ export default function Economy() {
   const sorted = entries ? [...entries].sort((a, b) => b.balance - a.balance) : [];
   const filtered = sorted.filter((e) => (e.username || e.userId).toLowerCase().includes(search.toLowerCase()) || e.userId.includes(search));
   const totalBalance = sorted.reduce((sum, e) => sum + e.balance, 0);
-  const maxBalance = sorted.length > 0 ? sorted[0].balance : 1;
 
   return (
     <div className="space-y-8">
       <PageTransition>
-        <div className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] p-8 md:p-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber/[0.04] via-transparent to-cyan/[0.03] pointer-events-none" />
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber/[0.06] rounded-full blur-[80px] animate-float" />
-          <div className="relative">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber/10 border border-amber/20 flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-amber" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight text-gradient-amber">{t("economyTitle")}</h2>
-                <p className="text-muted-foreground/40 text-sm mt-0.5">{t("economyDesc")}</p>
-              </div>
-            </div>
-            <div className="mt-8 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 mb-2">{t("economyTotal")}</p>
-              {isLoading ? (
-                <Skeleton className="h-16 w-64 mx-auto" />
-              ) : (
-                <span className="text-6xl md:text-7xl font-black font-mono text-gradient-amber animate-fade-in">
-                  {totalBalance.toLocaleString()}
-                </span>
-              )}
-              <p className="text-xs text-muted-foreground/30 mt-3">{t("economyTotalBalances", { count: sorted.length.toString() })}</p>
-            </div>
-          </div>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-gradient-cyber flex items-center gap-3">
+            <Wallet className="w-8 h-8 text-cyan" /> {t("economyTitle")}
+          </h2>
+          <p className="text-muted-foreground/60 mt-2 text-sm">{t("economyDesc")}</p>
         </div>
       </PageTransition>
 
-      <Stagger className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <PageTransition delay={100}>
-            <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-              <div className="p-5 border-b border-white/[0.04] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-amber" />
-                  <span className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/40">{t("economyTotal")}</span>
+      <Stagger className="grid gap-5 md:grid-cols-2">
+        <GlowCard color="cyan">
+          <Card className="border-0 bg-transparent">
+            <CardHeader><CardTitle className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/40">{t("economyTotal")}</CardTitle></CardHeader>
+            <CardContent>
+              {isLoading ? <Skeleton className="h-10 w-40" /> : (
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-cyan/10 flex items-center justify-center border border-cyan/15"><Coins className="w-6 h-6 text-cyan" /></div>
+                  <div>
+                    <span className="text-3xl font-bold font-mono text-cyan">{totalBalance.toLocaleString()}</span>
+                    <p className="text-[11px] text-muted-foreground/40 mt-0.5">{t("economyTotalBalances", { count: sorted.length })}</p>
+                  </div>
                 </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30" />
-                  <Input
-                    placeholder={t("economySearch")}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 w-56 h-8 text-xs bg-white/[0.03] border-white/[0.06]"
-                  />
-                </div>
-              </div>
-              <div className="divide-y divide-white/[0.03]">
-                {isLoading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-4 px-5 py-4">
-                        <Skeleton className="h-8 w-8 rounded-lg" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-4 w-32" />
-                        <div className="ml-auto"><Skeleton className="h-4 w-16" /></div>
-                      </div>
-                    ))
-                  : filtered.length > 0
-                  ? filtered.map((entry, idx) => {
-                      const RankIcon = rankIcons[idx] || null;
-                      const pct = maxBalance > 0 ? (entry.balance / maxBalance) * 100 : 0;
-                      return (
-                        <div key={entry.userId} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-all group cursor-default">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black ${
-                            idx < 3 ? `${rankBgs[idx]} ${rankColors[idx]}` : "bg-white/[0.03] text-muted-foreground/30"
-                          }`}>
-                            {RankIcon ? <RankIcon className="w-4 h-4" /> : idx + 1}
-                          </div>
-                          <Avatar className="w-9 h-9 border-2 border-white/[0.06]">
-                            <AvatarImage src={entry.avatar || undefined} />
-                            <AvatarFallback className="text-[10px] bg-white/[0.05]">{(entry.username || entry.userId).substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate group-hover:text-foreground transition-colors">{entry.username || "Unknown"}</p>
-                            <p className="text-[10px] text-muted-foreground/30 font-mono">{entry.userId}</p>
-                          </div>
-                          <div className="flex-1 hidden md:block">
-                            <div className="h-1.5 rounded-full bg-white/[0.03] overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-amber/60 to-amber transition-all duration-700"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-mono font-bold text-amber text-sm">{entry.balance.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  : (
-                    <div className="py-16 text-center text-muted-foreground/30">
-                      <Wallet className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                      <p className="text-sm">{t("economyNoData")}</p>
-                    </div>
-                  )}
-              </div>
-            </div>
-          </PageTransition>
-        </div>
+              )}
+            </CardContent>
+          </Card>
+        </GlowCard>
 
-        <div className="lg:col-span-2">
-          <PageTransition delay={200}>
-            <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6 glow-cyan">
-              <div className="flex items-center gap-2 mb-5">
-                <ArrowUpRight className="w-4 h-4 text-cyan-bright" />
-                <span className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/40">{t("economySetBalance")}</span>
-              </div>
+        <GlowCard color="blue">
+          <Card className="border-0 bg-transparent">
+            <CardHeader><CardTitle className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/40">{t("economySetBalance")}</CardTitle></CardHeader>
+            <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((v) => setBalance.mutate(v))} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="userId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] text-muted-foreground/40 uppercase tracking-wider font-bold">{t("economyUserId")}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t("economyUserId")} {...field} className="font-mono bg-white/[0.03] border-white/[0.06]" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="balance"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] text-muted-foreground/40 uppercase tracking-wider font-bold">{t("economyBalance")}</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={0} {...field} className="font-mono bg-white/[0.03] border-white/[0.06]" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={setBalance.isPending}
-                    className="w-full bg-cyan/15 hover:bg-cyan/20 text-cyan border border-cyan/20 font-bold text-xs uppercase tracking-wider"
-                  >
-                    {setBalance.isPending ? t("saving") : t("economySet")}
-                  </Button>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField control={form.control} name="userId" render={({ field }) => (
+                      <FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("economyUserId")}</FormLabel><FormControl><Input placeholder={t("economyUserId")} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="balance" render={({ field }) => (
+                      <FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("economyBalance")}</FormLabel><FormControl><Input type="number" min={0} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                  <Button type="submit" disabled={setBalance.isPending} className="w-full">{setBalance.isPending ? t("saving") : t("economySet")}</Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+        </GlowCard>
+      </Stagger>
 
-              <div className="mt-6 p-4 rounded-2xl border border-white/[0.04] bg-white/[0.015]">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/30">Network Stats</span>
-                  <ProgressRing value={sorted.length} max={Math.max(sorted.length, 10)} size={40} strokeWidth={3} color="#FFB800" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-2xl font-black font-mono text-amber">{sorted.length}</p>
-                    <p className="text-[10px] text-muted-foreground/30">{t("economyTotalBalances", { count: "" }).replace(/\s*\d+\s*$/, "").trim() || "Accounts"}</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-black font-mono text-cyan-bright">
-                      {sorted.length > 0 ? Math.round(totalBalance / sorted.length).toLocaleString() : 0}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/30">Average</p>
-                  </div>
-                </div>
+      <PageTransition delay={200}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/40">{t("economyTotalBalances", { count: sorted.length })}</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30" />
+                <Input placeholder={t("economySearch")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 w-64" />
               </div>
             </div>
-          </PageTransition>
-        </div>
-      </Stagger>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-muted-foreground/30 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.04]">
+                  <tr>
+                    <th className="px-6 py-3 font-bold">#</th>
+                    <th className="px-6 py-3 font-bold">{t("economyUserId")}</th>
+                    <th className="px-6 py-3 font-bold text-right">{t("economyBalance")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.03]">
+                  {isLoading ? Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}><td className="px-6 py-3"><Skeleton className="h-6 w-8" /></td><td className="px-6 py-3"><Skeleton className="h-6 w-32" /></td><td className="px-6 py-3 flex justify-end"><Skeleton className="h-6 w-20" /></td></tr>
+                  )) : filtered.length > 0 ? filtered.map((entry, idx) => (
+                    <tr key={entry.userId} className="hover:bg-white/[0.02] transition-all group">
+                      <td className="px-6 py-3">
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[10px] font-bold ${
+                          idx === 0 ? "bg-yellow-500/15 text-yellow-400" : idx === 1 ? "bg-gray-300/10 text-gray-300" : idx === 2 ? "bg-orange-500/10 text-orange-400" : "bg-white/[0.03] text-muted-foreground/40"
+                        }`}>{idx + 1}</span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8 border border-white/[0.08]"><AvatarImage src={entry.avatar || undefined} /><AvatarFallback className="text-[10px] bg-white/[0.05]">{(entry.username || entry.userId).substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                          <div>
+                            <p className="font-medium group-hover:text-foreground transition-colors">{entry.username || "Unknown"}</p>
+                            <p className="text-[10px] text-muted-foreground/30 font-mono">{entry.userId}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right"><span className="font-mono font-bold text-cyan">{entry.balance.toLocaleString()}</span></td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan={3} className="px-6 py-12 text-center text-muted-foreground/30"><Wallet className="w-10 h-10 mx-auto mb-3 opacity-20" /><p>{t("economyNoData")}</p></td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </PageTransition>
     </div>
   );
 }

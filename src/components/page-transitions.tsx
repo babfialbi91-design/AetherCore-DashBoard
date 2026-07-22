@@ -1,115 +1,79 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export function PageTransition({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+interface PageTransitionProps {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}
+
+export function PageTransition({ children, className = "", delay = 0 }: PageTransitionProps) {
   const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), delay || 50);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
   }, [delay]);
-
   return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(20px)",
-        transition: "opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-      }}
-    >
+    <div className={`transition-all duration-600 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"} ${className}`}>
       {children}
     </div>
   );
 }
 
-export function Stagger({ children, className = "", staggerMs = 80 }: { children: React.ReactNode; className?: string; staggerMs?: number }) {
+interface StaggerProps {
+  children: React.ReactNode;
+  className?: string;
+  staggerMs?: number;
+}
+
+export function Stagger({ children, className = "", staggerMs = 50 }: StaggerProps) {
+  const items = React.Children.toArray(children);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 60);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <div className={className}>
-      {React.Children.map(children, (child, i) => (
-        <StaggerItem key={i} delay={i * staggerMs}>
+      {items.map((child, i) => (
+        <div
+          key={i}
+          className="transition-all duration-500 ease-out"
+          style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(16px)", transitionDelay: `${i * staggerMs}ms` }}
+        >
           {child}
-        </StaggerItem>
+        </div>
       ))}
     </div>
   );
 }
 
-function StaggerItem({ children, delay }: { children: React.ReactNode; delay: number }) {
-  const [visible, setVisible] = useState(false);
+interface GlowCardProps {
+  children: React.ReactNode;
+  className?: string;
+  color?: string;
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), delay + 50);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
+export function GlowCard({ children, className = "", color = "cyan" }: GlowCardProps) {
+  const [hover, setHover] = useState(false);
+  const colors: Record<string, string> = {
+    cyan: "rgba(6, 214, 160, 0.1)",
+    blue: "rgba(59, 130, 246, 0.1)",
+    green: "rgba(34, 197, 94, 0.1)",
+    red: "rgba(239, 68, 68, 0.1)",
+    yellow: "rgba(234, 179, 8, 0.1)",
+    pink: "rgba(255, 45, 123, 0.1)",
+  };
   return (
     <div
+      className={`relative transition-all duration-300 ${className}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(0.98)",
-        transition: `opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)`,
+        boxShadow: hover ? `0 0 30px ${colors[color] || colors.cyan}, 0 8px 30px rgba(0,0,0,0.25)` : "0 4px 20px rgba(0,0,0,0.15)",
+        transform: hover ? "translateY(-2px)" : "translateY(0)",
       }}
     >
       {children}
     </div>
-  );
-}
-
-export function GlowCard({ children, color = "magenta", className = "" }: { children: React.ReactNode; color?: "magenta" | "cyan" | "violet" | "amber" | "red"; className?: string }) {
-  return (
-    <div className={`card-hover ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-export function FloatingOrb({ color, size, top, left, delay = 0 }: { color: string; size: number; top: string; left: string; delay?: number }) {
-  return (
-    <div
-      className="pointer-events-none absolute rounded-full blur-[80px] animate-float-slow"
-      style={{ width: size, height: size, top, left, background: color, animationDelay: `${delay}s` }}
-    />
-  );
-}
-
-export function AnimatedCounter({ value, className = "" }: { value: number | string; className?: string }) {
-  return (
-    <span
-      key={String(value)}
-      className={className}
-      style={{ animation: "countUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
-    >
-      {value}
-    </span>
-  );
-}
-
-export function ProgressRing({ value, max, size = 80, strokeWidth = 6, color = "#FF006E" }: { value: number; max: number; size?: number; strokeWidth?: number; color?: string }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = Math.min(value / max, 1);
-  const offset = circumference * (1 - progress);
-
-  return (
-    <svg width={size} height={size} className="rotate-[-90deg]">
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        style={{
-          filter: `drop-shadow(0 0 6px ${color}40)`,
-          transition: "stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
-      />
-    </svg>
   );
 }

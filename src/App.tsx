@@ -29,7 +29,6 @@ import Notifications from "@/pages/notifications";
 import AutoRules from "@/pages/autorules";
 import BadWords from "@/pages/badwords";
 import EmbedBuilder from "@/pages/embedbuilder";
-import SettingsPage from "@/pages/settings";
 
 const queryClient = new QueryClient();
 
@@ -97,7 +96,6 @@ function AppRoutes() {
               <Route path="/autoresponses" component={AutoResponses} />
               <Route path="/announce" component={Announce} />
               <Route path="/embedbuilder" component={EmbedBuilder} />
-              <Route path="/settings" component={SettingsPage} />
               <Route component={NotFound} />
             </Switch>
           </Layout>
