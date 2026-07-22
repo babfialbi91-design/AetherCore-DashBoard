@@ -7,14 +7,8 @@ import {
   LayoutDashboard, Trophy, Gamepad2, Swords, ShoppingBag, Calendar, Coins,
   ShoppingCart, Ticket, MessageCircleWarning, ScrollText, TrendingUp, Bell,
   GitBranch, ShieldBan, AlertTriangle, Bot, Megaphone, Palette,
-  LogOut, Globe, PanelLeftClose, PanelLeft, Zap, Activity, Sparkles, Star
+  LogOut, Globe, PanelLeftClose, PanelLeft, Zap, Activity, Star, Settings
 } from "lucide-react";
-
-async function apiCall<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
-}
 
 const navSections = [
   { label: "MAIN", items: [
@@ -46,6 +40,9 @@ const navSections = [
     { path: "/autoresponses", icon: Bot, labelKey: "navAutoResponses", accent: "#8B5CF6" },
     { path: "/embedbuilder", icon: Palette, labelKey: "navEmbedBuilder", accent: "#00D4FF" },
     { path: "/announce", icon: Megaphone, labelKey: "navAnnounce", accent: "#FF006E" },
+  ]},
+  { label: "SYSTEM", items: [
+    { path: "/settings", icon: Settings, labelKey: "navSettings", accent: "#8B5CF6" },
   ]},
 ];
 
@@ -90,7 +87,6 @@ function ParticleCanvas() {
         ctx.globalAlpha = p.alpha;
         ctx.fill();
       });
-      // Draw connections
       ctx.globalAlpha = 0.03;
       ctx.strokeStyle = "#FF006E";
       ctx.lineWidth = 0.5;
@@ -121,6 +117,19 @@ function ParticleCanvas() {
   return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" style={{ opacity: 0.6 }} />;
 }
 
+const THEME_KEY = "aethercore-theme";
+
+type ThemeMode = "modern" | "classic";
+
+export function getTheme(): ThemeMode {
+  return (localStorage.getItem(THEME_KEY) as ThemeMode) || "modern";
+}
+
+export function setTheme(mode: ThemeMode) {
+  localStorage.setItem(THEME_KEY, mode);
+  window.dispatchEvent(new Event("theme-changed"));
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { t, language, setLanguage } = useLanguage();
@@ -129,10 +138,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [botProfile, setBotProfile] = useState<{ username: string; avatar: string; status: string; servers: { id: string; name: string; memberCount: number }[] } | null>(null);
   const [pageKey, setPageKey] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [activeNavIdx, setActiveNavIdx] = useState<number>(-1);
+  const [theme, setThemeState] = useState<ThemeMode>(getTheme);
+
+  const isClassic = theme === "classic";
 
   useEffect(() => {
-    apiCall("/bot/profile").then((data) => setBotProfile(data)).catch(() => {});
+    const loadProfile = () => {
+      fetch("/bot/profile", { headers: { "Content-Type": "application/json" } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setBotProfile(data); })
+        .catch(() => {});
+    };
+    loadProfile();
+    const onThemeChange = () => setThemeState(getTheme());
+    window.addEventListener("theme-changed", onThemeChange);
+    return () => window.removeEventListener("theme-changed", onThemeChange);
   }, []);
 
   useEffect(() => {
@@ -147,35 +167,84 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const activeIdx = allNavItems.findIndex((item) => location === item.path);
   const activeAccent = activeIdx >= 0 ? allNavItems[activeIdx].accent : "#FF006E";
 
+  if (isClassic) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#1a1a2e]">
+        <aside className="relative z-10 flex flex-col border-r border-white/10 bg-[#16213e] w-[220px] shrink-0">
+          <div className="px-4 py-4 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-3">
+              {botProfile?.avatar ? (
+                <img src={botProfile.avatar} alt="" className="w-10 h-10 rounded-full ring-2 ring-white/20 object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#0f3460] flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-white/70" />
+                </div>
+              )}
+              <div className="overflow-hidden">
+                <p className="text-sm font-semibold text-white truncate">{botProfile?.username || "AetherCore"}</p>
+                <p className="text-[10px] text-green-400">{botProfile?.status || "Online"}</p>
+              </div>
+            </div>
+          </div>
+          <ScrollArea className="flex-1 py-2 px-2">
+            {navSections.map((section) => (
+              <div key={section.label} className="mb-3">
+                <p className="px-3 mb-1 text-[10px] font-bold text-white/30 uppercase tracking-wider">{section.label}</p>
+                {section.items.map((item) => {
+                  const active = location === item.path;
+                  const Icon = item.icon;
+                  return (
+                    <Link key={item.path} href={item.path}>
+                      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        active ? "bg-white/10 text-white" : "text-white/50 hover:text-white/70 hover:bg-white/5"
+                      }`}>
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="text-sm truncate">{t(item.labelKey)}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </ScrollArea>
+          <div className="border-t border-white/10 p-2 space-y-1 shrink-0">
+            <button onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors">
+              <Globe className="w-4 h-4 shrink-0" />
+              <span className="text-sm">{language === "en" ? "العربية" : "English"}</span>
+            </button>
+            <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span className="text-sm">{t("logout")}</span>
+            </button>
+          </div>
+        </aside>
+        <main className="flex-1 overflow-y-auto relative z-10 bg-[#1a1a2e]">
+          <div className="max-w-[1200px] mx-auto px-6 py-6">
+            <div key={pageKey} className="animate-fade-in">{children}</div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-mesh" onMouseMove={handleMouseMove}>
       <ParticleCanvas />
 
-      {/* Floating orbs — massive, animated */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full bg-magenta/[0.05] blur-[200px] animate-float-slow" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-violet/[0.06] blur-[180px] animate-float" style={{ animationDelay: "-3s" }} />
         <div className="absolute top-[30%] right-[20%] w-[500px] h-[500px] rounded-full bg-cyan-bright/[0.04] blur-[150px] animate-float-slow" style={{ animationDelay: "-5s" }} />
         <div className="absolute top-[70%] left-[25%] w-[400px] h-[400px] rounded-full bg-amber/[0.03] blur-[120px] animate-float" style={{ animationDelay: "-7s" }} />
         <div className="absolute top-[5%] right-[35%] w-[300px] h-[300px] rounded-full bg-emerald/[0.03] blur-[100px] animate-float-slow" style={{ animationDelay: "-2s" }} />
-        {/* Cursor glow */}
-        <div
-          className="absolute w-[300px] h-[300px] rounded-full bg-magenta/[0.06] blur-[120px] transition-all duration-1000 ease-out"
-          style={{ left: mousePos.x - 150, top: mousePos.y - 150 }}
-        />
+        <div className="absolute w-[300px] h-[300px] rounded-full bg-magenta/[0.06] blur-[120px] transition-all duration-1000 ease-out" style={{ left: mousePos.x - 150, top: mousePos.y - 150 }} />
       </div>
 
-      {/* Sidebar */}
       <aside className={`relative z-10 flex flex-col border-r border-white/[0.06] bg-[#06040D]/90 backdrop-blur-3xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${collapsed ? "w-[80px]" : "w-[280px]"}`}>
-        {/* Animated gradient top line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
-          <div
-            className="h-full w-[200%] animate-gradient-border"
-            style={{ background: `linear-gradient(90deg, ${activeAccent}, #8B5CF6, #00D4FF, ${activeAccent})` }}
-          />
+          <div className="h-full w-[200%] animate-gradient-border" style={{ background: `linear-gradient(90deg, ${activeAccent}, #8B5CF6, #00D4FF, ${activeAccent})` }} />
         </div>
 
-        {/* Bot Profile Header */}
         {!collapsed ? (
           <div className="px-4 pt-5 pb-4 border-b border-white/[0.05] shrink-0 animate-fade-in">
             <div className="flex items-center gap-3.5 mb-3">
@@ -191,12 +260,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald border-[2.5px] border-[#06040D] animate-pulse-neon shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               </div>
               <div className="overflow-hidden">
-                <p className="text-[15px] font-bold tracking-tight text-foreground/90 truncate animate-slide-in-left" style={{ animationDelay: "0.1s" }}>
-                  {botProfile?.username || "AetherCore"}
-                </p>
+                <p className="text-[15px] font-bold tracking-tight text-white truncate">{botProfile?.username || "AetherCore"}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse-neon" />
-                  <p className="text-[11px] text-emerald/80 font-semibold tracking-wide uppercase">{botProfile?.status || "Online"}</p>
+                  <p className="text-[11px] text-emerald font-semibold tracking-wide uppercase">{botProfile?.status || "Online"}</p>
                 </div>
               </div>
             </div>
@@ -212,9 +279,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-foreground/60 truncate group-hover:text-foreground/80 transition-colors">{server.name}</p>
+                      <p className="text-[11px] font-semibold text-white/70 truncate group-hover:text-white/90 transition-colors">{server.name}</p>
                     </div>
-                    <span className="text-[9px] font-mono text-muted-foreground/30">{(server.memberCount || 0).toLocaleString()}</span>
+                    <span className="text-[9px] font-mono text-white/40">{(server.memberCount || 0).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -236,12 +303,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Nav */}
         <ScrollArea className="flex-1 py-3 px-2">
           {navSections.map((section) => (
             <div key={section.label} className="mb-4">
               {!collapsed && (
-                <p className="px-3 mb-1.5 text-[9px] font-black tracking-[0.2em] text-muted-foreground/20 uppercase">{section.label}</p>
+                <p className="px-3 mb-1.5 text-[9px] font-black tracking-[0.2em] text-white/25 uppercase">{section.label}</p>
               )}
               <div className="space-y-0.5">
                 {section.items.map((item) => {
@@ -253,13 +319,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${
                           active
                             ? "text-white"
-                            : "text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.04]"
+                            : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
                         }`}
                         style={active ? { background: `linear-gradient(135deg, ${item.accent}15, ${item.accent}08)`, boxShadow: `0 0 20px ${item.accent}10` } : {}}
-                        onMouseEnter={() => setActiveNavIdx(allNavItems.indexOf(item))}
-                        onMouseLeave={() => setActiveNavIdx(-1)}
                       >
-                        {/* Active glow bar */}
                         {active && (
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full animate-pulse-neon" style={{ background: item.accent, boxShadow: `0 0 10px ${item.accent}60` }} />
                         )}
@@ -282,38 +345,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </ScrollArea>
 
-        {/* Bottom */}
         <div className="border-t border-white/[0.05] p-2 space-y-1 shrink-0">
-          <button
-            onClick={() => setLanguage(language === "en" ? "ar" : "en")}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <button onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-300">
             <Globe className="w-[18px] h-[18px] shrink-0" />
             {!collapsed && <span className="text-[13px] font-medium">{language === "en" ? "العربية" : "English"}</span>}
           </button>
-          <button
-            onClick={() => signOut()}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground/40 hover:text-rose hover:bg-rose/[0.06] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:text-rose hover:bg-rose/[0.06] transition-all duration-300">
             <LogOut className="w-[18px] h-[18px] shrink-0" />
             {!collapsed && <span className="text-[13px] font-medium">{t("logout")}</span>}
           </button>
-          <button
-            onClick={() => setCollapsed((v) => !v)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground/40 hover:text-foreground/70 hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <button onClick={() => setCollapsed((v) => !v)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-300">
             {collapsed ? <PanelLeft className="w-[18px] h-[18px] shrink-0" /> : <PanelLeftClose className="w-[18px] h-[18px] shrink-0" />}
             {!collapsed && <span className="text-[13px] font-medium">{t("collapse")}</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 overflow-y-auto relative z-10">
         <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8">
-          <div key={pageKey} className="animate-page-enter">
-            {children}
-          </div>
+          <div key={pageKey} className="animate-page-enter">{children}</div>
         </div>
       </main>
     </div>
