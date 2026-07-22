@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getTheme, getSettings } from "@/lib/theme-store";
 import {
   LayoutDashboard, Trophy, Gamepad2, Swords, ShoppingBag, Calendar, Coins,
   ShoppingCart, Ticket, MessageCircleWarning, ScrollText, TrendingUp, Bell,
@@ -117,47 +118,97 @@ function ParticleCanvas() {
   return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" style={{ opacity: 0.6 }} />;
 }
 
-const THEME_KEY = "aethercore-theme";
-
-type ThemeMode = "modern" | "classic";
-
-export function getTheme(): ThemeMode {
-  return (localStorage.getItem(THEME_KEY) as ThemeMode) || "modern";
-}
-
-export function setTheme(mode: ThemeMode) {
-  localStorage.setItem(THEME_KEY, mode);
-  window.dispatchEvent(new Event("theme-changed"));
-}
-
-export default function Layout({ children }: { children: React.ReactNode }) {
+/* ───────── CLASSIC LAYOUT ───────── */
+function ClassicLayout({ children, botProfile, language, setLanguage, signOut, pageKey }: any) {
   const [location] = useLocation();
-  const { t, language, setLanguage } = useLanguage();
-  const { signOut } = useAuth();
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
-  const [botProfile, setBotProfile] = useState<{ username: string; avatar: string; status: string; servers: { id: string; name: string; memberCount: number }[] } | null>(null);
-  const [pageKey, setPageKey] = useState(0);
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#111827]">
+      <aside className={`relative z-10 flex flex-col bg-[#1F2937] border-r border-gray-700 transition-all duration-200 ${collapsed ? "w-[60px]" : "w-[220px]"}`}>
+        {/* Bot Profile */}
+        <div className={`px-3 py-4 border-b border-gray-700 shrink-0 ${collapsed ? "flex justify-center" : ""}`}>
+          <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
+            {botProfile?.avatar ? (
+              <img src={botProfile.avatar} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-gray-600 shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+            )}
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{botProfile?.username || "AetherCore"}</p>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <p className="text-[10px] text-green-400">{botProfile?.status || "Online"}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nav */}
+        <ScrollArea className="flex-1 py-2 px-1.5">
+          {navSections.map((section) => (
+            <div key={section.label} className="mb-2">
+              {!collapsed && (
+                <p className="px-3 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{section.label}</p>
+              )}
+              {section.items.map((item) => {
+                const active = location === item.path;
+                const Icon = item.icon;
+                return (
+                  <Link key={item.path} href={item.path}>
+                    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer text-[13px] transition-colors duration-150 ${
+                      active
+                        ? "bg-blue-600/20 text-blue-400 font-medium"
+                        : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    }`}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!collapsed && <span className="truncate">{t(item.labelKey)}</span>}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </ScrollArea>
+
+        {/* Bottom */}
+        <div className="border-t border-gray-700 p-1.5 space-y-0.5 shrink-0">
+          <button onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-gray-400 hover:text-gray-200 hover:bg-white/5 text-[13px] transition-colors">
+            <Globe className="w-4 h-4 shrink-0" />
+            {!collapsed && <span>{language === "en" ? "العربية" : "English"}</span>}
+          </button>
+          <button onClick={() => signOut()} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-500/10 text-[13px] transition-colors">
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!collapsed && <span>{t("logout")}</span>}
+          </button>
+          <button onClick={() => setCollapsed((v: boolean) => !v)} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-gray-400 hover:text-gray-200 hover:bg-white/5 text-[13px] transition-colors">
+            {collapsed ? <PanelLeft className="w-4 h-4 shrink-0" /> : <PanelLeftClose className="w-4 h-4 shrink-0" />}
+            {!collapsed && <span>{t("collapse")}</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto bg-[#111827]">
+        <div className="max-w-[1200px] mx-auto px-6 py-6">
+          <div key={pageKey} className="animate-fade-in">{children}</div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/* ───────── MODERN LAYOUT ───────── */
+function ModernLayout({ children, botProfile, language, setLanguage, signOut, pageKey }: any) {
+  const [location] = useLocation();
+  const { t } = useLanguage();
+  const [collapsed, setCollapsed] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [theme, setThemeState] = useState<ThemeMode>(getTheme);
-
-  const isClassic = theme === "classic";
-
-  useEffect(() => {
-    const loadProfile = () => {
-      fetch("/bot/profile", { headers: { "Content-Type": "application/json" } })
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data) setBotProfile(data); })
-        .catch(() => {});
-    };
-    loadProfile();
-    const onThemeChange = () => setThemeState(getTheme());
-    window.addEventListener("theme-changed", onThemeChange);
-    return () => window.removeEventListener("theme-changed", onThemeChange);
-  }, []);
-
-  useEffect(() => {
-    setPageKey((k) => k + 1);
-  }, [location]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     setMousePos({ x: e.clientX, y: e.clientY });
@@ -166,66 +217,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const allNavItems = navSections.flatMap((s) => s.items);
   const activeIdx = allNavItems.findIndex((item) => location === item.path);
   const activeAccent = activeIdx >= 0 ? allNavItems[activeIdx].accent : "#FF006E";
-
-  if (isClassic) {
-    return (
-      <div className="flex h-screen overflow-hidden bg-[#1a1a2e]">
-        <aside className="relative z-10 flex flex-col border-r border-white/10 bg-[#16213e] w-[220px] shrink-0">
-          <div className="px-4 py-4 border-b border-white/10 shrink-0">
-            <div className="flex items-center gap-3">
-              {botProfile?.avatar ? (
-                <img src={botProfile.avatar} alt="" className="w-10 h-10 rounded-full ring-2 ring-white/20 object-cover" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-[#0f3460] flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white/70" />
-                </div>
-              )}
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-white truncate">{botProfile?.username || "AetherCore"}</p>
-                <p className="text-[10px] text-green-400">{botProfile?.status || "Online"}</p>
-              </div>
-            </div>
-          </div>
-          <ScrollArea className="flex-1 py-2 px-2">
-            {navSections.map((section) => (
-              <div key={section.label} className="mb-3">
-                <p className="px-3 mb-1 text-[10px] font-bold text-white/30 uppercase tracking-wider">{section.label}</p>
-                {section.items.map((item) => {
-                  const active = location === item.path;
-                  const Icon = item.icon;
-                  return (
-                    <Link key={item.path} href={item.path}>
-                      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                        active ? "bg-white/10 text-white" : "text-white/50 hover:text-white/70 hover:bg-white/5"
-                      }`}>
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span className="text-sm truncate">{t(item.labelKey)}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
-          </ScrollArea>
-          <div className="border-t border-white/10 p-2 space-y-1 shrink-0">
-            <button onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors">
-              <Globe className="w-4 h-4 shrink-0" />
-              <span className="text-sm">{language === "en" ? "العربية" : "English"}</span>
-            </button>
-            <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span className="text-sm">{t("logout")}</span>
-            </button>
-          </div>
-        </aside>
-        <main className="flex-1 overflow-y-auto relative z-10 bg-[#1a1a2e]">
-          <div className="max-w-[1200px] mx-auto px-6 py-6">
-            <div key={pageKey} className="animate-fade-in">{children}</div>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-mesh" onMouseMove={handleMouseMove}>
@@ -269,7 +260,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             {botProfile?.servers && botProfile.servers.length > 0 && (
               <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-                {botProfile.servers.map((server) => (
+                {botProfile.servers.map((server: any) => (
                   <div key={server.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.04] mb-1.5 hover:bg-white/[0.05] transition-colors group">
                     {server.icon ? (
                       <img src={server.icon} alt="" className="w-6 h-6 rounded-lg object-cover" />
@@ -317,22 +308,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <Link key={item.path} href={item.path}>
                       <div
                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${
-                          active
-                            ? "text-white"
-                            : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
+                          active ? "text-white" : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
                         }`}
                         style={active ? { background: `linear-gradient(135deg, ${item.accent}15, ${item.accent}08)`, boxShadow: `0 0 20px ${item.accent}10` } : {}}
                       >
                         {active && (
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full animate-pulse-neon" style={{ background: item.accent, boxShadow: `0 0 10px ${item.accent}60` }} />
                         )}
-                        <Icon
-                          className="w-[18px] h-[18px] shrink-0 transition-all duration-300"
-                          style={active ? { color: item.accent, filter: `drop-shadow(0 0 8px ${item.accent}60)` } : {}}
-                        />
-                        {!collapsed && (
-                          <span className="text-[13px] font-medium truncate">{t(item.labelKey)}</span>
-                        )}
+                        <Icon className="w-[18px] h-[18px] shrink-0 transition-all duration-300" style={active ? { color: item.accent, filter: `drop-shadow(0 0 8px ${item.accent}60)` } : {}} />
+                        {!collapsed && <span className="text-[13px] font-medium truncate">{t(item.labelKey)}</span>}
                         {active && !collapsed && (
                           <div className="ml-auto w-1.5 h-1.5 rounded-full animate-pulse-neon" style={{ background: item.accent, boxShadow: `0 0 6px ${item.accent}` }} />
                         )}
@@ -354,7 +338,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <LogOut className="w-[18px] h-[18px] shrink-0" />
             {!collapsed && <span className="text-[13px] font-medium">{t("logout")}</span>}
           </button>
-          <button onClick={() => setCollapsed((v) => !v)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-300">
+          <button onClick={() => setCollapsed((v: boolean) => !v)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-all duration-300">
             {collapsed ? <PanelLeft className="w-[18px] h-[18px] shrink-0" /> : <PanelLeftClose className="w-[18px] h-[18px] shrink-0" />}
             {!collapsed && <span className="text-[13px] font-medium">{t("collapse")}</span>}
           </button>
@@ -368,4 +352,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   );
+}
+
+/* ───────── MAIN LAYOUT ───────── */
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const { language, setLanguage } = useLanguage();
+  const { signOut } = useAuth();
+  const [botProfile, setBotProfile] = useState<any>(null);
+  const [pageKey, setPageKey] = useState(0);
+  const [theme, setThemeState] = useState(getTheme);
+
+  useEffect(() => {
+    fetch("/bot/profile", { headers: { "Content-Type": "application/json" } })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setBotProfile(data); })
+      .catch(() => {});
+
+    const onThemeChange = () => setThemeState(getTheme());
+    window.addEventListener("theme-changed", onThemeChange);
+    return () => window.removeEventListener("theme-changed", onThemeChange);
+  }, []);
+
+  useEffect(() => {
+    setPageKey((k) => k + 1);
+  }, [location]);
+
+  const sharedProps = { botProfile, language, setLanguage, signOut, pageKey };
+
+  return theme === "classic"
+    ? <ClassicLayout {...sharedProps}>{children}</ClassicLayout>
+    : <ModernLayout {...sharedProps}>{children}</ModernLayout>;
 }
