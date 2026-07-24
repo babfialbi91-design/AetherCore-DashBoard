@@ -24,12 +24,12 @@ async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 type TicketConfig = { channelId: string | null; staffRoleIds: string[]; panelTitle: string; panelDescription: string };
-type TicketType = { id: string; value: string; label: string; emoji: string | null };
+type TicketType = { id: string; value: string; label: string; emoji: string | null; openMessage: string | null };
 type Ticket = { id: string; type: string; status: string; channelId: string; createdAt: string; closedAt: string | null; hasTranscript: boolean; opener: { id: string; displayName: string; avatar: string | null }; claimedBy: { id: string; displayName: string; avatar: string | null } | null };
 type Channel = { id: string; name: string; type: number };
 type Role = { id: string; name: string; color: string };
 
-const typeSchema = z.object({ label: z.string().min(1, "Label is required"), emoji: z.string().optional() });
+const typeSchema = z.object({ label: z.string().min(1, "Label is required"), emoji: z.string().optional(), openMessage: z.string().optional() });
 type TypeFormValues = z.infer<typeof typeSchema>;
 
 export default function Tickets() {
@@ -66,7 +66,7 @@ export default function Tickets() {
   });
   const addType = useMutation({
     mutationFn: (data: TypeFormValues) =>
-      apiCall("/api/bot/tickets/types", { method: "POST", body: JSON.stringify({ label: data.label, emoji: data.emoji || null }) }),
+      apiCall("/api/bot/tickets/types", { method: "POST", body: JSON.stringify({ label: data.label, emoji: data.emoji || null, openMessage: data.openMessage || null }) }),
     onSuccess: () => {
       toast({ title: t("success") });
       typeForm.reset();
@@ -98,7 +98,7 @@ export default function Tickets() {
     },
     onError: () => toast({ title: t("error"), variant: "destructive" }),
   });
-  const typeForm = useForm<TypeFormValues>({ resolver: zodResolver(typeSchema), defaultValues: { label: "", emoji: "" } });
+  const typeForm = useForm<TypeFormValues>({ resolver: zodResolver(typeSchema), defaultValues: { label: "", emoji: "", openMessage: "" } });
 
   const [configState, setConfigState] = useState({ channelId: "", staffRoleIds: [] as string[], panelTitle: "", panelDescription: "" });
   useEffect(() => { if (config) setConfigState({ channelId: config.channelId || "", staffRoleIds: config.staffRoleIds || [], panelTitle: config.panelTitle || "", panelDescription: config.panelDescription || "" }); }, [config]);
@@ -169,10 +169,15 @@ export default function Tickets() {
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Plus className="w-4 h-4 text-cyan" />{t("addTicketType")}</CardTitle></CardHeader>
               <CardContent>
                 <Form {...typeForm}>
-                  <form onSubmit={typeForm.handleSubmit((v) => addType.mutate(v))} className="flex gap-3 items-end">
-                    <FormField control={typeForm.control} name="emoji" render={({ field }) => (<FormItem className="w-24"><FormLabel className="text-xs text-muted-foreground/50">{t("emoji")}</FormLabel><FormControl><Input placeholder="🎫" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={typeForm.control} name="label" render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs text-muted-foreground/50">{t("typeName")}</FormLabel><FormControl><Input placeholder={t("typeNamePlaceholder")} {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <Button type="submit" disabled={addType.isPending} className="mb-0.5"><Plus className="w-4 h-4 mr-1" />{t("addTicketType")}</Button>
+                  <form onSubmit={typeForm.handleSubmit((v) => addType.mutate(v))} className="space-y-3">
+                    <div className="flex gap-3 items-end">
+                      <FormField control={typeForm.control} name="emoji" render={({ field }) => (<FormItem className="w-24"><FormLabel className="text-xs text-muted-foreground/50">{t("emoji")}</FormLabel><FormControl><Input placeholder="🎫" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={typeForm.control} name="label" render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs text-muted-foreground/50">{t("typeName")}</FormLabel><FormControl><Input placeholder={t("typeNamePlaceholder")} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                    <FormField control={typeForm.control} name="openMessage" render={({ field }) => (
+                      <FormItem><FormLabel className="text-xs text-muted-foreground/50">{t("ticketTypeOpenMessage")}</FormLabel><FormControl><Textarea placeholder={t("ticketTypeOpenMessagePlaceholder")} className="min-h-[80px] resize-none font-mono text-sm" {...field} /></FormControl><p className="text-[10px] text-muted-foreground/30">{t("ticketTypeOpenMessageHint")}</p><FormMessage /></FormItem>
+                    )} />
+                    <Button type="submit" disabled={addType.isPending}><Plus className="w-4 h-4 mr-1" />{t("addTicketType")}</Button>
                   </form>
                 </Form>
               </CardContent>
@@ -182,12 +187,20 @@ export default function Tickets() {
                 {loadingTypes ? <Skeleton className="h-32 w-full" /> : types && types.length > 0 ? (
                   <div className="space-y-2">
                     {types.map((type) => (
-                      <div key={type.id} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/[0.04]">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{type.emoji || "📁"}</span>
-                          <div><p className="font-medium">{type.label}</p><p className="text-xs text-muted-foreground/30 font-mono">{type.value}</p></div>
+                      <div key={type.id} className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.04]">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{type.emoji || "📁"}</span>
+                            <div><p className="font-medium">{type.label}</p><p className="text-xs text-muted-foreground/30 font-mono">{type.value}</p></div>
+                          </div>
+                          <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-red-400" onClick={() => deleteType.mutate(type.id)}><Trash2 className="w-4 h-4" /></Button>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-red-400" onClick={() => deleteType.mutate(type.id)}><Trash2 className="w-4 h-4" /></Button>
+                        {type.openMessage && (
+                          <div className="mt-2 ml-9 p-2 bg-purple/[0.05] border border-purple/10 rounded-lg">
+                            <p className="text-[10px] text-purple/60 font-bold uppercase tracking-wider mb-1">{t("ticketTypeOpenMessage")}</p>
+                            <p className="text-xs text-muted-foreground/60 whitespace-pre-wrap">{type.openMessage}</p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

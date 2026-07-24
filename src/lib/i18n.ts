@@ -273,6 +273,9 @@ const translations = {
     password: 'Password',
     passwordPlaceholder: 'Your password',
     logout: 'Log Out',
+    ticketTypeOpenMessage: 'Opening Message',
+    ticketTypeOpenMessagePlaceholder: 'Hello {user}! Welcome to {type} support...',
+    ticketTypeOpenMessageHint: 'Custom message shown when this ticket type is opened. Use {user} for the user mention and {type} for the ticket type label.',
   },
   ar: {
     overview: 'الرئيسية',
@@ -546,6 +549,9 @@ const translations = {
     password: 'كلمة المرور',
     passwordPlaceholder: 'كلمة المرور الخاصة بك',
     logout: 'تسجيل الخروج',
+    ticketTypeOpenMessage: 'رسالة الفتح',
+    ticketTypeOpenMessagePlaceholder: 'مرحباً {user}! أهلاً بك في دعم {type}...',
+    ticketTypeOpenMessageHint: 'رسالة مخصصة تظهر عند فتح تذكرة من هذا النوع. استخدم {user} لذكر المستخدم و {type} لاسم نوع التذكرة.',
   },
 } as const;
 
